@@ -44,6 +44,19 @@ cut_ordinal <- function(x,intervals){
 	plyr::mapvalues(x,lvls,remap_lvls)
 }
 
+# Encodes a vector as an ordered factor, whose levels are ordered ascendingly by applying a numeric function
+# x: a vector
+# num_func: a function that gives a numeric value to each member of x
+ordered_func <- function(x, num_func){
+	# Get the current unique values in x, omitting NA
+	cur_x <- as.character(unique(na.omit(x)))
+	# Order them using the value given by the numeric function
+	cur_x <- cur_x[order(num_func(cur_x))]
+
+	# Make values ordinal, with the ordered levels
+	ordered(x,levels=cur_x)
+}
+
 # Wrapper of reshape::melt.data.frame, when all the measure vars produce only one type of measure
 # thus, the "value" column produced by melt, can be renamed accordingly.
 # Note: This is the same as calling df <- melt(...); colnames(df)[ncol(df)] <- measure_name

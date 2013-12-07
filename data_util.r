@@ -59,3 +59,12 @@ melt_1measure <- function(data, id.vars, measure.vars, measure_name, variable_na
 mapvalues_to1 <- function(x, from, to, warn_missing = TRUE){
 	plyr::mapvalues(x, from, rep(to, length(from)), warn_missing = warn_missing)
 }
+
+# Replaces a string in a string vector that matches exactly the given string
+# within_str: string vector on which the replacement will be made
+# matching_str: a literal string to be matched
+# replacement: the replacement string vector, or single string
+str_replace_exact <- function(within_str, matching_str, replacement){
+  within_str[within_str==matching_str] <- replacement
+  within_str
+}

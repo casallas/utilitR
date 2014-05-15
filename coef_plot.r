@@ -1,3 +1,5 @@
+library("ggplot2")
+
 #' Plots the coefficients of an lm fit using ggplot2
 #' @param fit an lm object
 #' @param intercept include the intercept in the plot?

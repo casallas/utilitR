@@ -4,8 +4,8 @@ library(ggplot2)
 #' @param smooth add a smoother line to the residuals? Default is FALSE
 resid_plot.lm <- function(fit, smooth=F){
   p <- ggplot(aes(x=.fitted, y=.resid), data=fit) +
-    geom_hline(yintercept=0, colour="grey") +
-	geom_hline(yintercept=c(-1,1)*summary(fit1.f)$sigma, linetype="dashed", colour="grey")
+    geom_hline(yintercept=0) +
+	geom_hline(yintercept=c(-1,1)*summary(fit)$sigma, linetype="dashed", colour="grey")
   if(smooth){
     p <- p + geom_smooth(colour="#377eb8", se=F)
   }	

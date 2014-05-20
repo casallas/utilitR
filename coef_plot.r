@@ -60,9 +60,6 @@ coef_plot.lm <- function(fit, intercept=T, ...){
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
 .coef_plot <- function(fit.coef, coef.names=NULL, parse.coef=T, digits=1, order.coef=F){
-  if(order.coef){
-    fit.coef <- fit.coef[order(fit.coef$mu), ]
-  }
   # Add a column for the evaluated factor based on row names, keeping order
   fit.coef$coefficient <- factor(rownames(fit.coef), levels = rownames(fit.coef))
   
@@ -70,6 +67,11 @@ coef_plot.lm <- function(fit, intercept=T, ...){
     fit.coef <- within(fit.coef, {
       coefficient <- plyr::mapvalues(coefficient, levels(coefficient), coef.names)
     })
+  }
+  if(order.coef){
+    fit.coef <- fit.coef[order(fit.coef$mu), ]
+	# Reorder coefficient names keeping order
+	fit.coef$coefficient <- with(fit.coef, factor(as.character(coefficient), levels = as.character(coefficient)))
   }
   
   # Parse the text of the factors to make them expressions

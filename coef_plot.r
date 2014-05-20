@@ -47,6 +47,36 @@ coef_plot.lm <- function(fit, intercept=T, ...){
   .coef_plot(fit.coef, ...)
 }
 
+#' Plots the coefficients of a stan fit using ggplot2
+#' @param fit a stanfit object
+#' @param pars A vector of character strings specifying the parameters to be plotted.
+#'   "beta" by default
+#' @param ... further parameters passed to \code{\link{coef_plot_mcmc}} and \code{\link{.coef_plot}}
+coef_plot.stanfit <- function(fit, pars="beta", ...){
+  betas <- extract(fit, pars)[pars]
+  coef_plot_mcmc(betas, ...)
+}
+
+#' Plots the coefficients of MCMC draws using ggplot2
+#'
+#' Although this method is intended for MCMC draws, it can be used with any variable composed of numeric elements.
+#' The input is cast to a "long" data frame using \code{\link{reshape2::melt}}, so it's important to either have
+#' the input set with (col)names or pass meaningful names via coef.names to avoid "noise" or blank coefficient names
+#' as axis breaks
+#'
+#' @param mcmc usually a data frame, matrix, list of vectors or vector containing MCMC draws
+#' @param ... further parameters passed to \code{\link{coef_plot_mcmc}} and \code{\link{.coef_plot}}
+coef_plot_mcmc <- function(mcmc, ...){
+  betas <- reshape2::melt(as.data.frame(mcmc), variable.name="coefficient")
+  fit.coef <- ddply(betas, .(coefficient), summarize,
+    mu = mean(value),
+	p025 = quantile(value, .025),
+	p975 = quantile(value, .975),
+	p159 = quantile(value, .159),
+	p841 = quantile(value, .841))
+  .coef_plot(fit.coef, ...)
+}
+
 #' Plots the coefficients of a fit using ggplot2
 #'
 #' Users should call the higher-level generic "coef_plot", or implement a method for the

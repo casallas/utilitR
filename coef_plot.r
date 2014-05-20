@@ -68,6 +68,7 @@ coef_plot.stanfit <- function(fit, pars="beta", ...){
 #' @param ... further parameters passed to \code{\link{coef_plot_mcmc}} and \code{\link{.coef_plot}}
 coef_plot_mcmc <- function(mcmc, ...){
   betas <- reshape2::melt(as.data.frame(mcmc), variable.name="coefficient")
+  if(!require("plyr")) stop("plyr library not installed")
   fit.coef <- ddply(betas, .(coefficient), summarize,
     mu = mean(value),
 	p025 = quantile(value, .025),

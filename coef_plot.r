@@ -1,24 +1,32 @@
 library("ggplot2")
 
-#' Plots the coefficients of an lm fit using ggplot2
-#' @param fit an lm object
-#' @param intercept include the intercept in the plot?
+#' Plots the coefficients of a fit using ggplot2
+#' @param fit a fitted model object
 #' @param coef.names an optional vector containing the desired coefficient names in the output.
 #' @param parse.coef parse the coef names in the output. See \code{\link{plotmath}} for the syntax.
 #' @param digits number of decimal digits to show per coefficient
 #' @param order order coefficients per estimate value.
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and 
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
+#' @param ... further parameters passed to implementing methods
+coef_plot <- function(fit, coef.names=NULL, parse.coef=T, digits=1, order.coef=F, ...){
+	UseMethod("coef_plot")
+}
+
+#' Plots the coefficients of an lm fit using ggplot2
+#' @param fit an lm object
+#' @param intercept include the intercept in the plot?
+#' @param ... further parameters passed to \code{\link{.coef_plot}}
 #'
 #' @examples
 #'
 #' fit1 <- lm(price ~ carat + cut + depth + color + table + clarity + x + y + z, data=diamonds)
 #' # Misleading result
-#' coef_plot.lm(fit1, order.coef=T)
+#' coef_plot(fit1, order.coef=T)
 #' # Better
 #' fit1.z <- arm::standardize(fit1, standardize.y = T)
-#' coef_plot.lm(fit1.z, order.coef=T)
-coef_plot.lm <- function(fit, intercept=T, coef.names=NULL, parse.coef=T, digits=1, order.coef=F){
+#' coef_plot(fit1.z, order.coef=T)
+coef_plot.lm <- function(fit, intercept=T, ...){
   fit.se <- summary(fit)$coefficients[,2] # se is col 2
   fit.CI <- confint(fit)
   fit.coef <- data.frame(
@@ -30,17 +38,33 @@ coef_plot.lm <- function(fit, intercept=T, coef.names=NULL, parse.coef=T, digits
   if(!intercept){
     fit.coef <- fit.coef[-1,]
   }
-  if(order.coef){
-    fit.coef <- fit.coef[order(fit.coef$mu), ]
-  }
 
   fit.coef <- within(fit.coef,{
     # Create cols for +/-1 se
     p159 <- mu - se
     p841 <- mu + se
-    # Add a column for the evaluated factor based on row names, keeping order
-    coefficient <- factor(rownames(fit.coef), levels = rownames(fit.coef))
   })
+  .coef_plot(fit.coef, ...)
+}
+
+#' Plots the coefficients of a fit using ggplot2
+#'
+#' Users should call the higher-level generic "coef_plot", or implement a method for the
+#' corresponding class to get fit.coef from the specific object
+#'
+#' @param fit.coef a data frame containing columns mu, p025, p975, p159, and p841.
+#' @param coef.names an optional vector containing the desired coefficient names in the output.
+#' @param parse.coef parse the coef names in the output. See \code{\link{plotmath}} for the syntax.
+#' @param digits number of decimal digits to show per coefficient
+#' @param order order coefficients per estimate value.
+#'   When set to TRUE, beware of coefficient scales to avoid misleading results and
+#'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
+.coef_plot <- function(fit.coef, coef.names=NULL, parse.coef=T, digits=1, order.coef=F){
+  if(order.coef){
+    fit.coef <- fit.coef[order(fit.coef$mu), ]
+  }
+  # Add a column for the evaluated factor based on row names, keeping order
+  fit.coef$coefficient <- factor(rownames(fit.coef), levels = rownames(fit.coef))
   
   if(!is.null(coef.names)){
     fit.coef <- within(fit.coef, {

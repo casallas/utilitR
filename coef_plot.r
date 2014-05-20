@@ -4,7 +4,7 @@ library("ggplot2")
 #' @param fit a fitted model object
 #' @param coef.names an optional vector containing the desired coefficient names in the output.
 #' @param parse.coef parse the coef names in the output. See \code{\link{plotmath}} for the syntax.
-#' @param digits number of decimal digits to show per coefficient
+#' @param digits number of decimal digits to show per coefficient. If NA the estimates are not shown.
 #' @param order order coefficients per estimate value.
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and 
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
@@ -86,7 +86,7 @@ coef_plot_mcmc <- function(mcmc, ...){
 #' @param fit.coef a data frame containing columns mu, p025, p975, p159, and p841.
 #' @param coef.names an optional vector containing the desired coefficient names in the output.
 #' @param parse.coef parse the coef names in the output. See \code{\link{plotmath}} for the syntax.
-#' @param digits number of decimal digits to show per coefficient
+#' @param digits number of decimal digits to show per coefficient. If NA the estimates are not shown.
 #' @param order order coefficients per estimate value.
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
@@ -113,13 +113,16 @@ coef_plot_mcmc <- function(mcmc, ...){
   names(labs) <- levels(fit.coef$coefficient)
   fit.coef$digits <- digits
   
-  ggplot(fit.coef, aes(x=coefficient, y=mu, ymin = p025, ymax = p975)) +
+  p <- ggplot(fit.coef, aes(x=coefficient, y=mu, ymin = p025, ymax = p975)) +
     scale_x_discrete("coefficient", labels = labs)+
     scale_y_continuous("estimate") +
     geom_hline(yintercept=0, linetype="dashed") +
     geom_pointrange(aes(ymin = p159, ymax = p841), size = 1, colour="#e41a1c") + # se
-    geom_pointrange(colour="#e41a1c") + # CI
-    geom_text(aes(label=paste0(round(mu, digits),"\n"))) +
-    coord_flip() +
+    geom_pointrange(colour="#e41a1c")
+  if(!is.na(digits)){
+    p <- p + # CI
+      geom_text(aes(label=paste0(round(mu, digits),"\n")))
+  }
+  p + coord_flip() +
     theme_bw()
 }

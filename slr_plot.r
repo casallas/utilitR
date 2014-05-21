@@ -17,7 +17,7 @@ slr_plot.lm <- function(fit, post.sims=100){
 	# Give default names to predictors
 	names(sim.coef) <- paste0("b", 0:(ncol(sim.coef)-1))
       }else{
-        warning("ARM package is required in order to use post.sims, post.sims will be treated as zero")
+        warning("'arm' package is required in order to use post.sims, post.sims will be treated as zero")
         post.sims = 0
       }
   }

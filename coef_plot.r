@@ -44,6 +44,9 @@ coef_plot.lm <- function(fit, intercept=T, ...){
     p159 <- mu - se
     p841 <- mu + se
   })
+  # Add a column for the evaluated factor based on row names, keeping order
+  fit.coef$coefficient <- factor(rownames(fit.coef), levels = rownames(fit.coef))
+
   .coef_plot(fit.coef, ...)
 }
 
@@ -83,7 +86,7 @@ coef_plot_mcmc <- function(mcmc, ...){
 #' Users should call the higher-level generic "coef_plot", or implement a method for the
 #' corresponding class to get fit.coef from the specific object
 #'
-#' @param fit.coef a data frame containing columns mu, p025, p975, p159, and p841.
+#' @param fit.coef a data frame containing columns coefficient, mu, p025, p975, p159, and p841.
 #' @param coef.names an optional vector containing the desired coefficient names in the output.
 #' @param parse.coef parse the coef names in the output. See \code{\link{plotmath}} for the syntax.
 #' @param digits number of decimal digits to show per coefficient. If NA the estimates are not shown.
@@ -91,9 +94,6 @@ coef_plot_mcmc <- function(mcmc, ...){
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
 .coef_plot <- function(fit.coef, coef.names=NULL, parse.coef=T, digits=1, order.coef=F){
-  # Add a column for the evaluated factor based on row names, keeping order
-  fit.coef$coefficient <- factor(rownames(fit.coef), levels = rownames(fit.coef))
-  
   if(!is.null(coef.names)){
     fit.coef <- within(fit.coef, {
       coefficient <- plyr::mapvalues(coefficient, levels(coefficient), coef.names)

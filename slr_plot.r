@@ -9,14 +9,21 @@ slr_plot.lm <- function(fit, post.sims=100){
   # "sanitize" names giving defaults to avoid potential conflicts with ggplot2
   names(fit$model) <- c("Y", "X")
   
-  if(post.sims > 0 & require(arm)){
+  if(post.sims > 0 ){
+     if (require(arm)){
 	fit.sim <- sim(fit, post.sims)
 	sim.coef <- fit.sim@coef
 	sim.coef <- data.frame(sim.coef)
 	# Give default names to predictors
 	names(sim.coef) <- paste0("b", 0:(ncol(sim.coef)-1))
-  }else{
-    post.sims = 0
+      }else{
+        warning("ARM package is required in order to use post.sims, post.sims will be treated as zero")
+        post.sims = 0
+      }
+  }
+  else
+  {
+  post.sims = 0
   }
   
   p <- ggplot(aes(y=Y, x=X), data=fit$model)

@@ -99,28 +99,14 @@ coef_plot_mcmc <- function(mcmc, ...){
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
 .coef_plot <- function(fit.coef, coef.names=NULL, parse.coef=T, digits=1, order.coef=F){
-  if(!is.null(coef.names)){
-    fit.coef <- within(fit.coef, {
-      coefficient <- plyr::mapvalues(coefficient, levels(coefficient), coef.names)
-    })
-  }
-  if(order.coef){
-    fit.coef <- fit.coef[order(fit.coef$mu), ]
-	# Reorder coefficient names keeping order
-	fit.coef$coefficient <- with(fit.coef, factor(as.character(coefficient), levels = as.character(coefficient)))
-  }
-  
-  # Parse the text of the factors to make them expressions
-  labs <- sapply(levels(fit.coef$coefficient),
-                 function(x){
-                   ifelse(parse.coef, parse(text = x), x)
-                   })
-  names(labs) <- levels(fit.coef$coefficient)
+  # Replace coefficient names
+  .coef.names(fit.coef) <- coef.names
+  # Reorder coefficients
+  .coef.order(fit.coef) <- order.coef
+  # This allows to round mu within geom_text
   fit.coef$digits <- digits
-  
+
   p <- ggplot(fit.coef, aes(x=coefficient, y=mu, ymin = p025, ymax = p975)) +
-    scale_x_discrete("coefficient", labels = labs)+
-    scale_y_continuous("estimate") +
     geom_hline(yintercept=0, linetype="dashed") +
     geom_pointrange(aes(ymin = p159, ymax = p841), size = 1, colour="#e41a1c") + # se
     geom_pointrange(colour="#e41a1c")
@@ -128,6 +114,53 @@ coef_plot_mcmc <- function(mcmc, ...){
     p <- p + # CI
       geom_text(aes(label=paste0(round(mu, digits),"\n")))
   }
-  p + coord_flip() +
+  if(require(magrittr, quietly=T))
+    p %>% .coef_plot_deco(fit.coef, parse.coef=parse.coef)
+  else
+    .coef_plot_deco(p, fit.coef, parse.coef=parse.coef)
+}
+
+#' Replaces the values of "fit.coef$coefficient" by those given by "value"
+#' @param fit.coef a data frame containing a "coefficient"
+#' @param value A vector of replacement values. length(value) == length(unique(fit.coef$coefficients))
+`.coef.names<-` <- function(fit.coef, value){
+  if(!is.null(value)){
+    fit.coef <- within(fit.coef, {
+      coefficient <- plyr::mapvalues(coefficient, levels(coefficient), value)
+     })
+  }
+  fit.coef
+}
+
+#' Re-orders fit.coef by fit.coef$mu, levels of fit.coef$coefficient are also reordered
+#' @param fit.coef a data frame containing "coefficient" and "mu" columns
+#' @param value A number defining the order:
+#'  "ascending" : (value > 0) | (value == T)
+#'  "descending" : value < 0
+#'  "as-is" : value == (0 | F)
+`.coef.order<-` <- function(fit.coef, value){
+  if(value){
+    fit.coef <- fit.coef[order(fit.coef$mu, decreasing = value < 0), ]
+    # Reorder coefficient names keeping order
+    fit.coef$coefficient <- factor(as.character(fit.coef$coefficient), levels = as.character(fit.coef$coefficient))
+  }
+  fit.coef
+}
+
+#' Flips coordinates, adds scale (parsed) labels, names and \code{\link{theme_bw}} to the plot
+#' @param p plot to modify
+#' @param fit.coef a data frame containing a "coefficient" columns, which may be parsed
+#' @param parse.coef should scale labels be the parsed values of fit.coef$coefficient? See \code{\link{plotmath}} for the syntax.
+.coef_plot_deco <- function(p, fit.coef, parse.coef){
+  # Parse the text of the factors to make them expressions
+  labs <- sapply(levels(fit.coef$coefficient),
+                 function(x){
+                   ifelse(parse.coef, parse(text = x), x)
+                   })
+  names(labs) <- levels(fit.coef$coefficient)
+  
+  p + scale_x_discrete("coefficient", labels = labs)+
+    scale_y_continuous("estimate") +
+    coord_flip() +
     theme_bw()
 }

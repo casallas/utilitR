@@ -20,12 +20,17 @@ coef_plot <- function(fit, coef.names=NULL, parse.coef=T, digits=1, order.coef=F
 #'
 #' @examples
 #'
+#' # Ordering
 #' fit1 <- lm(price ~ carat + cut + depth + color + table + clarity + x + y + z, data=diamonds)
-#' # Misleading result
+#' ## Misleading result
 #' coef_plot(fit1, order.coef=T)
-#' # Better
+#' ## Better
 #' fit1.z <- arm::standardize(fit1, standardize.y = T)
 #' coef_plot(fit1.z, order.coef=T)
+#'
+#' # Renaming
+#' fit2 <- lm(price ~ carat, data=diamonds)
+#' coef_plot(fit2, order.coef=T, coef.names=paste0("beta[", 0:1, "]"))
 coef_plot.lm <- function(fit, intercept=T, ...){
   fit.se <- summary(fit)$coefficients[,2] # se is col 2
   fit.CI <- confint(fit)

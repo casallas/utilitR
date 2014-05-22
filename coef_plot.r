@@ -120,6 +120,56 @@ coef_plot_mcmc <- function(mcmc, ...){
     .coef_plot_deco(p, fit.coef, parse.coef=parse.coef)
 }
 
+#' Plots the coefficients of MCMC draws using Cat's eye plots (via ggplot2 violins)
+#'
+#' The Cat's Eye plot idea comes from Cumming 2013, Ch. 4. It makes sense here because,
+#' unlike confidence intervals, MCMC draws do represent a distribution.
+#' Although this method is intended for MCMC draws, it can be used with any variable composed of numeric elements.
+#' The input is cast to a "long" data frame using \code{\link{reshape2::melt}}, so it's important to either have
+#' the input set with (col)names or pass meaningful names via coef.names to avoid "noise" or blank coefficient names
+#' as axis breaks
+#'
+#' @param mcmc usually a data frame, matrix, list of vectors or vector containing MCMC draws
+#' @param coef.names an optional vector containing the desired coefficient names in the output.
+#' @param parse.coef parse the coef names in the output. See \code{\link{plotmath}} for the syntax.
+#' @param digits number of decimal digits to show per coefficient. If NA the estimates are not shown
+#'  this is the default too avoid having a busy plot
+#' @param order order coefficients per estimate value.
+#'   When set to TRUE, beware of coefficient scales to avoid misleading results and
+#'   consider standardizing or any other form of rescaling coefficients
+coef_catseye <- function(mcmc, coef.names=NULL, parse.coef=T, digits=NA, order.coef=F){
+  betas <- reshape2::melt(as.data.frame(mcmc), variable.name="coefficient")
+  if(!require(dplyr)) stop("The coef_catseye plot requires the dplyr library")
+  # Create a summarized data frame
+  fit.coef <- betas %>%
+    group_by(coefficient) %>%
+    summarize(mu = mean(value))
+
+  # Replace coefficient names
+  .coef.names(fit.coef) <- coef.names
+  # Reorder coefficients in the summarized data frame
+  .coef.order(fit.coef) <- order.coef
+  # And the original data frame
+  betas$coefficient <- with(betas, factor(as.character(coefficient), levels = as.character(fit.coef$coefficient)))
+  # This allows to round mu within geom_text
+  fit.coef$digits <- digits
+
+  p <- ggplot(fit.coef, aes(x=coefficient, y=mu)) +
+    geom_hline(yintercept=0, linetype="dashed") +
+    geom_violin(aes(x=coefficient, y=value), data=betas, colour="grey", adjust=2, fill=NA) +
+    geom_violin(aes(x=coefficient, y=value), data= betas %>%
+                  group_by(coefficient) %>%
+                  filter(value > quantile(value, .025) &
+                           value < quantile(value, .975)), adjust=2, fill=NA) +
+    geom_point(colour="#e41a1c")
+  if(!is.na(digits)){
+    p <- p + # CI
+      geom_text(aes(label=paste0(round(mu, digits),"\n")))
+  }
+  # Possible thanks to magrittr
+  p %>% .coef_plot_deco(fit.coef, parse.coef=parse.coef)
+}
+
 #' Replaces the values of "fit.coef$coefficient" by those given by "value"
 #' @param fit.coef a data frame containing a "coefficient"
 #' @param value A vector of replacement values. length(value) == length(unique(fit.coef$coefficients))
@@ -127,7 +177,7 @@ coef_plot_mcmc <- function(mcmc, ...){
   if(!is.null(value)){
     fit.coef <- within(fit.coef, {
       coefficient <- plyr::mapvalues(coefficient, levels(coefficient), value)
-     })
+    })
   }
   fit.coef
 }
@@ -156,7 +206,7 @@ coef_plot_mcmc <- function(mcmc, ...){
   labs <- sapply(levels(fit.coef$coefficient),
                  function(x){
                    ifelse(parse.coef, parse(text = x), x)
-                   })
+                 })
   names(labs) <- levels(fit.coef$coefficient)
   
   p + scale_x_discrete("coefficient", labels = labs)+

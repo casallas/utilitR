@@ -120,6 +120,63 @@ coef_plot_mcmc <- function(mcmc, ...){
     .coef_plot_deco(p, fit.coef, parse.coef=parse.coef)
 }
 
+#' Plots the coefficients of the posterior draws of a fit using Cat's eye plots (via ggplot2 violins)
+#'
+#' The Cat's Eye plot idea comes from Cumming 2013, Ch. 4. It makes sense here because,
+#' unlike confidence intervals, we are using draws from the posterior distribution.
+#'
+#' @param fit a fitted model object
+#' @param coef.names an optional vector containing the desired coefficient names in the output.
+#' @param parse.coef parse the coef names in the output. See \code{\link{plotmath}} for the syntax.
+#' @param digits number of decimal digits to show per coefficient. If NA the estimates are not shown
+#'  this is the default too avoid having a busy plot
+#' @param order order coefficients per estimate value.
+#'   When set to TRUE, beware of coefficient scales to avoid misleading results and
+#'   consider standardizing or any other form of rescaling coefficients
+coef_catseye <- function(fit, coef.names=NULL, parse.coef=F, digits=1, order.coef=F, ...){
+  UseMethod("coef_catseye")
+}
+
+#' Plots the coefficients of the posterior draws of an lm regression using Cat's eye plots (via ggplot2 violins)
+#'
+#' The Cat's Eye plot idea comes from Cumming 2013, Ch. 4. It makes sense here because,
+#' unlike confidence intervals, we are using draws from the posterior distribution.
+#' This method uses \code{\link{arm::sim}} to get the posterior simulations.
+#'
+#' @param fit an lm object
+#' @param intercept include the intercept in the plot?
+#' @param sigma include the residual sd in the plot?
+#' @param post.sims number of simulation draws from the posterior. Defaults to 1000
+#' @param ... further parameters passed to \code{\link{.coef_plot}}
+#'
+#' @examples
+#'
+#' fit1 <- lm(weight ~ Diet, data=ChickWeight)
+#' coef_catseye(fit1, order.coef=T)
+#'
+#' # Skewed sigma
+#' fit2 <- lm(weight ~ Diet, data=ChickWeight[sample(nrow(ChickWeight), 20),])
+#' coef_catseye(fit2, sigma=T)
+coef_catseye.lm <- function(fit, intercept=T, sigma=F, post.sims=1000, ...){
+  if (require(arm)){
+    fit.sim <- sim(fit, post.sims)
+    sim.coef <- fit.sim@coef
+    sim.coef <- data.frame(sim.coef)
+    # Give default names to predictors
+    names(sim.coef) <- names(coef(fit))
+    if(!intercept){
+      sim.coef <- sim.coef[,-1]
+    }
+    if(sigma){
+      sim.coef <- cbind(sim.coef, sigma=fit.sim@sigma)
+    }
+    coef_catseye_mcmc(sim.coef, ...)
+  }else{
+    warning("'arm' package is required in order to use draws from the posterior distribution of lm")
+    post.sims = 0
+  }
+}
+
 #' Plots the coefficients of MCMC draws using Cat's eye plots (via ggplot2 violins)
 #'
 #' The Cat's Eye plot idea comes from Cumming 2013, Ch. 4. It makes sense here because,
@@ -208,7 +265,7 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
                    ifelse(parse.coef, parse(text = x), x)
                  })
   names(labs) <- levels(fit.coef$coefficient)
-  
+
   p + scale_x_discrete("coefficient", labels = labs)+
     scale_y_continuous("estimate") +
     coord_flip() +

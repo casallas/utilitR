@@ -9,7 +9,7 @@ library("ggplot2")
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and 
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
 #' @param ... further parameters passed to implementing methods
-coef_plot <- function(fit, coef.names=NULL, parse.coef=T, digits=1, order.coef=F, ...){
+coef_plot <- function(fit, coef.names=NULL, parse.coef=F, digits=1, order.coef=F, ...){
 	UseMethod("coef_plot")
 }
 
@@ -30,7 +30,7 @@ coef_plot <- function(fit, coef.names=NULL, parse.coef=T, digits=1, order.coef=F
 #'
 #' # Renaming
 #' fit2 <- lm(price ~ carat, data=diamonds)
-#' coef_plot(fit2, order.coef=T, coef.names=paste0("beta[", 0:1, "]"))
+#' coef_plot(fit2, order.coef=T, parse.coef=T, coef.names=paste0("beta[", 0:1, "]"))
 coef_plot.lm <- function(fit, intercept=T, ...){
   fit.se <- summary(fit)$coefficients[,2] # se is col 2
   fit.CI <- confint(fit)
@@ -98,7 +98,7 @@ coef_plot_mcmc <- function(mcmc, ...){
 #' @param order order coefficients per estimate value.
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
-.coef_plot <- function(fit.coef, coef.names=NULL, parse.coef=T, digits=1, order.coef=F){
+.coef_plot <- function(fit.coef, coef.names=NULL, parse.coef=F, digits=1, order.coef=F){
   # Replace coefficient names
   .coef.names(fit.coef) <- coef.names
   # Reorder coefficients
@@ -137,7 +137,7 @@ coef_plot_mcmc <- function(mcmc, ...){
 #' @param order order coefficients per estimate value.
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and
 #'   consider standardizing or any other form of rescaling coefficients
-coef_catseye <- function(mcmc, coef.names=NULL, parse.coef=T, digits=NA, order.coef=F){
+coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, order.coef=F){
   betas <- reshape2::melt(as.data.frame(mcmc), variable.name="coefficient")
   if(!require(dplyr)) stop("The coef_catseye plot requires the dplyr library")
   # Create a summarized data frame

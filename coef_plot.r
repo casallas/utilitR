@@ -266,8 +266,8 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
                  })
   names(labs) <- levels(fit.coef$coefficient)
 
-  p + scale_x_discrete("coefficient", labels = labs)+
-    scale_y_continuous("estimate") +
+  p + scale_x_discrete("Coefficient", labels = labs)+
+    scale_y_continuous("Estimate") +
     coord_flip() +
     theme_bw()
 }

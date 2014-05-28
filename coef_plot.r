@@ -76,13 +76,14 @@ coef_plot.stanfit <- function(fit, pars="beta", ...){
 #' @param ... further parameters passed to \code{\link{coef_plot_mcmc}} and \code{\link{.coef_plot}}
 coef_plot_mcmc <- function(mcmc, ...){
   betas <- reshape2::melt(as.data.frame(mcmc), variable.name="coefficient")
-  if(!require("plyr")) stop("plyr library not installed")
-  fit.coef <- ddply(betas, .(coefficient), summarize,
-    mu = mean(value),
-	p025 = quantile(value, .025),
-	p975 = quantile(value, .975),
-	p159 = quantile(value, .159),
-	p841 = quantile(value, .841))
+  if(!require("dplyr")) stop("dplyr library not installed")
+  fit.coef <- betas %>%
+    group_by(coefficient) %>%
+    summarize(mu = mean(value),
+              p025 = quantile(value, .025),
+              p975 = quantile(value, .975),
+              p159 = quantile(value, .159),
+              p841 = quantile(value, .841))
   .coef_plot(fit.coef, ...)
 }
 
@@ -114,10 +115,8 @@ coef_plot_mcmc <- function(mcmc, ...){
     p <- p + # CI
       geom_text(aes(label=paste0(round(mu, digits),"\n")))
   }
-  if(require(magrittr, quietly=T))
-    p %>% .coef_plot_deco(fit.coef, parse.coef=parse.coef)
-  else
-    .coef_plot_deco(p, fit.coef, parse.coef=parse.coef)
+  if(!require(magrittr)) stop("magrittr library not installed")
+  p %>% .coef_plot_deco(fit.coef, parse.coef=parse.coef)
 }
 
 #' Plots the coefficients of the posterior draws of a fit using Cat's eye plots (via ggplot2 violins)

@@ -132,11 +132,11 @@ bincode <- function(x, ref=NULL, sep=dummify.sep()){
 
 # Get the main effect columns of a given source in a matrix of dataframe
 mainef <- function(df, x, sep=dummify.sep(), sep.inter=dummify.sep_inter()){
-  df[, mainef_detect(df, x, sep, sep.inter)]
+  df[, mainef_detect(df, x, sep, sep.inter), drop=F]
 }
 # Get the interaction effect columns of two sources in a matrix of dataframe
 intef <- function(df, x, y, sep=dummify.sep(), sep.inter=dummify.sep_inter()){
-  df[, intef_detect(df, x, y, sep, sep.inter)]
+  df[, intef_detect(df, x, y, sep, sep.inter), drop=F]
 }
 
 # detect the main effects of a given source in a matrix of dataframe

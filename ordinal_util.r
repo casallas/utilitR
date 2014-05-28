@@ -119,3 +119,29 @@ ord_int_gtest <- function(fit.clmm, fit.lmer, numThresh){
     theme(legend.position="top") +
     scale_colour_brewer(palette="Set1")
 }
+
+#' Predict using mcmc chains of an oprobit with random intercepts
+#' @param X IV's
+#' @param cuts mcmc draws of the cutpoints
+#' @param coefs mcmc draws of the coefficients. ncol(X) == ncol(coefs)
+#' @param ranints mcmc draws of the per-subject intercepts
+#' @param subj subject identifiers. length(unique(subj)) == ncol(ranints)
+predict_oprobit_mcmc <- function(X, cuts, coefs, ranints, subj){
+  X <- as.matrix(X)
+  coefs <- as.matrix(coefs)
+  subj <- as.matrix(bincode(subj)) # Bincode to do matrix multiplication
+  y_hat <- matrix(nrow=nrow(cuts), ncol=nrow(X))
+  theta <- array(0, c(nrow(cuts), nrow(X), ncol(cuts)+1))
+
+  for(s in 1:nrow(cuts)){
+    cat(s, "..")
+    eta <- X %*% coefs[s,] + subj %*% ranints[s, ]
+    eta <- drop(eta) # Drop unused dimensions in eta (ncol should be 1)
+    theta[s, ,1] <- 1 - pnorm(eta - cuts[s, 1])
+    for(k in 2:ncol(cuts))
+      theta[s, ,k] <- pnorm(eta - cuts[s, k-1]) - pnorm(eta - cuts[s, k])
+    theta[s, ,k+1] <- pnorm(eta - cuts[s, k])
+    y_hat[s, ] <- apply(theta[s,,], 1, which.max) # which.max per row of theta[s,,]
+  }
+  y_hat
+}

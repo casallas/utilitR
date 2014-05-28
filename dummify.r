@@ -51,6 +51,10 @@ dummify.set_sep_inter <- function(sep_inter=":"){
 #'   \code{nrow(dummify(x)) = length(x)}, \code{ncol(dummify(x)) = length(unique(x))-1}.
 #'   Note that the column names of the data frame may not be "syntactically valid". See \code\{\link{make.names}}
 #'   for information on syntactically valid names
+#'
+#' @example
+#' x <- c("a","b","b","c")
+#' dummify(x) # a data.frame with 2 columns and 4 rows: {{0,0},{1,0},{1,0},{0,1}}
 dummify <- function(x, ref=NULL, sep=dummify.sep()){
   x.name <- deparse(substitute(x))
   x <- factor(x)
@@ -97,4 +101,31 @@ dummify_interaction <- function(x, y, ref.x=NULL, ref.y=NULL, sep=dummify.sep(),
     }
   }
   data.frame(xy.dum, check.names=F)
+}
+
+#' Returns a data frame containing the binary coded given variable
+#'
+#' @param x variable to binary code; it can be of any type that can be converted to a factor
+#' @param sep string that separates the variable from its values.
+#'   By default it uses the separator given by \code{\link{dummify.sep}}.
+#'   To change the default separator call \code\{link{dummify.set_sep}}
+#' @return a data.frame with the binary coding of x.
+#'   \code{nrow(dummify(x)) = length(x)}, \code{ncol(dummify(x)) = length(unique(x))-1}.
+#'   Note that the column names of the data frame may not be "syntactically valid". See \code\{\link{make.names}}
+#'   for information on syntactically valid names
+#'
+#' @example
+#' x <- c("a","b","b","c")
+#' bincode(x) # a data.frame with 3 columns and 4 rows: {{1,0,0},{0,1,0},{0,1,0},{0,0,1}}
+bincode <- function(x, ref=NULL, sep=dummify.sep()){
+  x.name <- deparse(substitute(x))
+  x <- factor(x)
+  if(!is.null(ref)){
+	  x <- relevel(x, ref)
+  }
+  x.dum <- list()
+  for(lv in levels(x)){
+    x.dum[[paste(x.name, lv, sep=sep)]] <- as.numeric(x==lv)
+  }
+  data.frame(x.dum, check.names=F)
 }

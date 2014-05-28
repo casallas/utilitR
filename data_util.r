@@ -81,3 +81,19 @@ str_replace_exact <- function(within_str, matching_str, replacement){
   within_str[within_str==matching_str] <- replacement
   within_str
 }
+
+# Returns the number of unique entries in a given vector
+n.unique <- function(vec){
+  length(unique(vec))
+}
+
+# Reads an RDS file or runs a function, saves and returns its value
+readOrRunSave <- function(filePath, fun, forceRun = F, ...){
+  if(!forceRun & file.exists(filePath)){
+    readRDS(filePath)
+  }else{
+    obj <- fun(...)
+    saveRDS(obj, filePath)
+    obj
+  }
+}

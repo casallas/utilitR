@@ -115,3 +115,12 @@ summary_mcmc <- function(mcmc, cred.mass=0.95){
   mcmc.hdi <- as.numeric(BEST::hdi(mcmc, cred.mass))
   list(mu = median(mcmc), hdi.lo = mcmc.hdi[1], hdi.hi = mcmc.hdi[2], cred.mass = cred.mass)
 }
+
+#' Gives the probability that one set of mcmc draws is greater than another
+#'
+#' lhs and rhs must both be numeric vectors, with equal lengths
+#' @examples
+#' p_greater_mcmc(rnorm(1000, mean=1), rnorm(1000))
+p_greater_mcmc <- function(lhs, rhs){
+  sum(lhs > rhs)/length(lhs)
+}

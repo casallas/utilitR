@@ -6,7 +6,7 @@ library("ggplot2")
 #' @param parse.coef parse the coef names in the output. See \code{\link{plotmath}} for the syntax.
 #' @param digits number of decimal digits to show per coefficient. If NA the estimates are not shown.
 #' @param order order coefficients per estimate value.
-#'   When set to TRUE, beware of coefficient scales to avoid misleading results and 
+#'   When set to TRUE, beware of coefficient scales to avoid misleading results and
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
 #' @param ... further parameters passed to implementing methods
 coef_plot <- function(fit, coef.names=NULL, parse.coef=F, digits=1, order.coef=F, ...){
@@ -36,8 +36,8 @@ coef_plot.lm <- function(fit, intercept=T, ...){
   fit.CI <- confint(fit)
   fit.coef <- data.frame(
     mu = coef(fit),
-    p025 = fit.CI[,1],
-    p975 = fit.CI[,2],
+    outerCI.0 = fit.CI[,1],
+    outerCI.1 = fit.CI[,2],
     se = fit.se
   )
   if(!intercept){
@@ -46,8 +46,8 @@ coef_plot.lm <- function(fit, intercept=T, ...){
 
   fit.coef <- within(fit.coef,{
     # Create cols for +/-1 se
-    p159 <- mu - se
-    p841 <- mu + se
+    innerCI.0 <- mu - se
+    innerCI.1 <- mu + se
   })
   # Add a column for the evaluated factor based on row names, keeping order
   fit.coef$coefficient <- factor(rownames(fit.coef), levels = rownames(fit.coef))
@@ -74,16 +74,25 @@ coef_plot.stanfit <- function(fit, pars="beta", ...){
 #'
 #' @param mcmc usually a data frame, matrix, list of vectors or vector containing MCMC draws
 #' @param ... further parameters passed to \code{\link{coef_plot_mcmc}} and \code{\link{.coef_plot}}
-coef_plot_mcmc <- function(mcmc, ...){
+#'
+#' @examples
+#' if(require(arm)){
+#'   fit1 <- lm(weight ~ Diet, data=ChickWeight)
+#'   fit1.sim <- sim(fit1, 10000)
+#'   # Fix coef names in the simulation
+#'   colnames(fit1.sim@coef) <- names(coef(fit1))
+#'   coef_plot_mcmc(fit1.sim@coef)
+#' }
+coef_plot_mcmc <- function(mcmc, innerCredMass = innerCM(), outerCredMass = outerCM(), ...){
   betas <- reshape2::melt(as.data.frame(mcmc), variable.name="coefficient")
   if(!require("dplyr")) stop("dplyr library not installed")
   fit.coef <- betas %>%
     group_by(coefficient) %>%
-    summarize(mu = mean(value),
-              p025 = quantile(value, .025),
-              p975 = quantile(value, .975),
-              p159 = quantile(value, .159),
-              p841 = quantile(value, .841))
+    summarize(mu = median(value),
+              outerCI.0 = BEST::hdi(value, outerCredMass)[1],
+              outerCI.1 = BEST::hdi(value, outerCredMass)[2],
+              innerCI.0 = BEST::hdi(value, innerCredMass)[1],
+              innerCI.1 = BEST::hdi(value, innerCredMass)[2])
   .coef_plot(fit.coef, ...)
 }
 
@@ -92,7 +101,7 @@ coef_plot_mcmc <- function(mcmc, ...){
 #' Users should call the higher-level generic "coef_plot", or implement a method for the
 #' corresponding class to get fit.coef from the specific object
 #'
-#' @param fit.coef a data frame containing columns coefficient, mu, p025, p975, p159, and p841.
+#' @param fit.coef a data frame containing columns coefficient, mu, outerCI.0, outerCI.1, innerCI.0, and innerCI.1.
 #' @param coef.names an optional vector containing the desired coefficient names in the output.
 #' @param parse.coef parse the coef names in the output. See \code{\link{plotmath}} for the syntax.
 #' @param digits number of decimal digits to show per coefficient. If NA the estimates are not shown.
@@ -107,9 +116,9 @@ coef_plot_mcmc <- function(mcmc, ...){
   # This allows to round mu within geom_text
   fit.coef$digits <- digits
 
-  p <- ggplot(fit.coef, aes(x=coefficient, y=mu, ymin = p025, ymax = p975)) +
+  p <- ggplot(fit.coef, aes(x=coefficient, y=mu, ymin = outerCI.0, ymax = outerCI.1)) +
     geom_hline(yintercept=0, linetype="dashed") +
-    geom_pointrange(aes(ymin = p159, ymax = p841), size = 1, colour="#e41a1c") + # se
+    geom_pointrange(aes(ymin = innerCI.0, ymax = innerCI.1), size = 1, colour="#e41a1c") + # se
     geom_pointrange(colour="#e41a1c")
   if(!is.na(digits)){
     p <- p + # CI
@@ -153,6 +162,9 @@ coef_catseye <- function(fit, coef.names=NULL, parse.coef=F, digits=1, order.coe
 #' fit1 <- lm(weight ~ Diet, data=ChickWeight)
 #' coef_catseye(fit1, order.coef=T)
 #'
+#' library(arm)
+#' coef_catseye(standardize(lm(dist ~ speed, data=cars), standardize.y=T))
+#'
 #' # Skewed sigma
 #' fit2 <- lm(weight ~ Diet, data=ChickWeight[sample(nrow(ChickWeight), 20),])
 #' coef_catseye(fit2, sigma=T)
@@ -193,13 +205,14 @@ coef_catseye.lm <- function(fit, intercept=T, sigma=F, post.sims=1000, ...){
 #' @param order order coefficients per estimate value.
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and
 #'   consider standardizing or any other form of rescaling coefficients
-coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, order.coef=F){
+coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, order.coef=F,
+                              credMass = outerCM()){
   betas <- reshape2::melt(as.data.frame(mcmc), variable.name="coefficient")
   if(!require(dplyr)) stop("The coef_catseye plot requires the dplyr library")
   # Create a summarized data frame
   fit.coef <- betas %>%
     group_by(coefficient) %>%
-    summarize(mu = mean(value))
+    summarize(mu = median(value))
 
   # Replace coefficient names
   .coef.names(fit.coef) <- coef.names
@@ -214,9 +227,10 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
     geom_hline(yintercept=0, linetype="dashed") +
     geom_violin(aes(x=coefficient, y=value), data=betas, colour="grey", adjust=2, fill=NA) +
     geom_violin(aes(x=coefficient, y=value), data= betas %>%
-                  group_by(coefficient) %>%
-                  filter(value > quantile(value, .025) &
-                           value < quantile(value, .975)), adjust=2, fill=NA) +
+                                                   group_by(coefficient) %>%
+                                                   filter(value > BEST::hdi(value, credMass)[1] &
+                                                          value < BEST::hdi(value, credMass)[2]),
+                adjust=2, fill=NA) +
     geom_point(colour="#e41a1c")
   if(!is.na(digits)){
     p <- p + # CI
@@ -269,4 +283,42 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
     scale_y_continuous("Estimate") +
     coord_flip() +
     theme_bw()
+}
+
+#' Gets the inner Credible Mass for MCMC chains
+#'
+#' By default the inner Credible Mass is 0.5
+#' To change the default inner Credible Mass call \code\{link{set_innerCM}}
+innerCM <- function(){
+  if(!exists("coef_plot.__innerCM")){
+    set_innerCM()
+  }
+  coef_plot.__innerCM
+}
+
+#' Sets the inner Credible Mass of MCMC chains
+#'
+#' By default the inner Credible Mass is 0.5
+#' Changing the default Credible Mass will change the plots generated by \code{\link{coef_plot_mcmc}}, and \code{\link{coef_catseye_mcmc}}
+set_innerCM <- function(credMass=0.5){
+  coef_plot.__innerCM <<- credMass
+}
+
+#' Gets the outer Credible Mass for MCMC chains
+#'
+#' By default the outer Credible Mass is 0.5
+#' To change the default outer Credible Mass call \code\{link{set_outerCM}}
+outerCM <- function(){
+  if(!exists("coef_plot.__outerCM")){
+    set_outerCM()
+  }
+  coef_plot.__outerCM
+}
+
+#' Sets the outer Credible Mass of MCMC chains
+#'
+#' By default the outer Credible Mass is 0.95
+#' Changing the default Credible Mass will change the plots generated by \code{\link{coef_plot_mcmc}}, and \code{\link{coef_catseye_mcmc}}
+set_outerCM <- function(credMass=0.95){
+  coef_plot.__outerCM <<- credMass
 }

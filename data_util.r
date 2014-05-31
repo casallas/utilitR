@@ -116,6 +116,12 @@ summary_mcmc <- function(mcmc, cred.mass=0.95){
   list(mu = median(mcmc), hdi.lo = mcmc.hdi[1], hdi.hi = mcmc.hdi[2], cred.mass = cred.mass)
 }
 
+#' Executes summary_mcmc on the columns of a matrix or dataframe, and returns a data frame
+summary_mcmcs <- function(mcmcs, cred.mass=0.95){
+  do.call(rbind.data.frame,
+          apply(mcmcs, 2, summary_mcmc, cred.mass))
+}
+
 #' Gives the probability that one set of mcmc draws is greater than another
 #'
 #' lhs and rhs must both be numeric vectors, with equal lengths

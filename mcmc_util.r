@@ -30,3 +30,21 @@ summary_mcmcs <- function(mcmcs, cred.mass=0.95){
 p_greater_mcmc <- function(lhs, rhs){
   sum(lhs > rhs)/length(lhs)
 }
+
+#' Generate posterior predictions
+#' @param X a numeric vector with predictors
+#' @param beta an n.sims*(nrow(X)+1) matrix of the posterior distributions of the beta coefficients
+#' @param include.intercept if TRUE, prepend a column of 1's to X before multiplying by beta
+#' @return an n.sims*(nrow(X)+1) matrix with the posterior predictions
+post_predict <- function(X, beta, include.intercept = T){
+  if(include.intercept) X <- cbind(1, X)
+  apply(X, 1, function(Xrow) beta %*% Xrow)
+}
+
+#' Generate posterior residuals given y and posterior predictions
+#' @param y a numeric vector with outcomes
+#' @param ppredict an n.sims*length(y) matrix of the posterior predictions
+#' @return an n.sims*length(y) matrix with the posterior residuals
+post_resid <- function(y, ppredict){
+  t(apply(ppredict, 1, function(pprow) y - pprow))
+}

@@ -30,24 +30,30 @@ tex_median <- function(vec, prefix = "Mdn=", ...){
 #' @param df data frame or matrix to convert to a tex table
 #' @param digits number of decimal places to print. Defaults to \link{\code{texu_digits}}
 #' @param drops columns from df to exclude in the output. Defaults to none
-#' @param hline should the output include a horizontal line below the column names?. Defaults to TRUE
+#' @param hline vector of rows which will have a horizontal line on top. The default "1" places a line after the header.
 #' @param col.names an optional vector containing the desired column names in the output.
-tex_df <- function(df, digits = texu_digits(), drops = c(), hline=T, col.names = NULL){
+tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names = NULL){
   stopifnot(require(magrittr))
   df <- df[, !names(df) %in% drops]
   for(cur.col in 1:ncol(df)){
     if(df[, cur.col] %>% is.numeric){
       df[, cur.col] <- df[, cur.col] %>% round(digits)
+    }else{
+      df[, cur.col] <- df[, cur.col] %>% as.character # To ensure we don't have any factors remaining
     }
   }
   tbl.hdr <- df %>% ncol %>% rep("c", .) %>% paste0(collapse = "") %>%  # Generate ncol "c"
              paste0("\\begin{tabular}{", ., "}\n") # insert them within begin{tabular}{________}
   if(is.null(col.names)) col.names <- colnames(df)
-  names.str <- col.names %>% paste(collapse = " & ") %>% paste("\\\\") # A string with colnames separated by &
+  df <- rbind(col.names, df)
   df.str <- df %>% apply(1, paste, collapse = " & ") %>% drop %>% # A vector of strings with the elements of each row separated by &
-            as.list %>% do.call(function(...) paste(..., sep="\\\\\n"), .) # Convert to list and paste elements separated by "\\" and newline
+              paste("\\\\") # Append "\\" to each line
+  for(i in 0:(length(hline)-1)) # Insert additional "\hline" lines
+    df.str <- df.str %>% append("\\hline", after=(hline[i+1]+i))
   tbl.ftr <- "\\end{tabular}\n"
-  paste(tbl.hdr, names.str, ifelse(hline, "\\hline", ""), df.str, tbl.ftr, sep="\n")
+  paste(tbl.hdr,
+        df.str %>% paste(collapse="\n"), # Convert the contents of the df to one long string, separating rows with newlines
+        tbl.ftr, sep="\n")
 }
 
 #' Returns the summary of an mcmc in tex format

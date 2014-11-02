@@ -31,17 +31,19 @@ tex_median <- function(vec, prefix = "Mdn=", ...){
 #' @param digits number of decimal places to print. Defaults to \link{\code{texu_digits}}
 #' @param drops columns from df to exclude in the output. Defaults to none
 #' @param hline should the output include a horizontal line below the column names?. Defaults to TRUE
-tex_df <- function(df, digits = texu_digits(), drops = c(), hline=T){
+#' @param col.names an optional vector containing the desired column names in the output.
+tex_df <- function(df, digits = texu_digits(), drops = c(), hline=T, col.names = NULL){
   stopifnot(require(magrittr))
   df <- df[, !names(df) %in% drops]
   for(cur.col in 1:ncol(df)){
     if(df[, cur.col] %>% is.numeric){
-      df[, cur.col] <- df[, cur.col] %>% round(2)
+      df[, cur.col] <- df[, cur.col] %>% round(digits)
     }
   }
   tbl.hdr <- df %>% ncol %>% rep("c", .) %>% paste0(collapse = "") %>%  # Generate ncol "c"
              paste0("\\begin{tabular}{", ., "}\n") # insert them within begin{tabular}{________}
-  names.str <- df %>% colnames %>% paste(collapse = " & ") %>% paste("\\\\") # A string with colnames separated by &
+  if(is.null(col.names)) col.names <- colnames(df)
+  names.str <- col.names %>% paste(collapse = " & ") %>% paste("\\\\") # A string with colnames separated by &
   df.str <- df %>% apply(1, paste, collapse = " & ") %>% drop %>% # A vector of strings with the elements of each row separated by &
             as.list %>% do.call(function(...) paste(..., sep="\\\\\n"), .) # Convert to list and paste elements separated by "\\" and newline
   tbl.ftr <- "\\end{tabular}\n"

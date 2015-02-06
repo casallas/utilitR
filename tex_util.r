@@ -62,8 +62,8 @@ tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names =
 
 #' Returns the summary of an mcmc in tex format
 #'
-#' The summary is printed in the following way "mu cred.mass*100\% HDI[hdi.lo, hdi.hi]"
-#' optionally encloses the output within "$" if math.mode == T
+#' The summary is printed in the following way "mu units, cred.mass*100\% HDI[hdi.lo, hdi.hi]"
+#' optionally encloses the numeric output within "$",e.g. "$mu$ units, $cred.mass*100\%$~HDI $[hdi.lo, hdi.hi]$", if math.mode == T
 #' The summary is calculated using \link\code{summary_mcmc}
 #'
 #' @param mcmc a numeric vector containing the mcmc draws
@@ -72,6 +72,10 @@ tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names =
 #' @param units Character string to append to the point estimate. For example "cm". By default it's ""
 #' @param math.mode if T, enclose output within "$"
 #' @digits digits number of decimal places to print
+#' @hdi.label text between cred.mass and the HDI range. By default it's "~HDI"
+#'  It might be useful to change this, e.g., to "\\text{~HDI }" for outline
+#'  equations, with math.mode = F. In this case it is also recommended to
+#'  replace ", 95\\%" by "\\text{, }95\\%, for example using gsub
 #'
 #' @examples
 #' tex_summary_mcmc(rnorm(1000))
@@ -82,10 +86,12 @@ tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names =
 #' # The same without math mode
 #' tex_summary_mcmc(rnorm(1000), est.str="\\mathit{Mdn}=", digits=3, math.mode = F)
 #' # [1] "\\mathit{Mdn}=0.03, 95\\% HDI [-1.869, 1.983]"
-tex_summary_mcmc <- function(mcmc, cred.mass=0.95, est.str = "", units = "", math.mode = T, digits=texu_digits()){
+tex_summary_mcmc <- function(mcmc, cred.mass=0.95, est.str = "", units = "", math.mode = T, digits=texu_digits(),
+                             hdi.label = "~HDI "){
   mcmc.sum <- lapply(summary_mcmc(mcmc), round, digits)
   ans <- with(mcmc.sum, paste0("$", est.str, mu, "$", units,
-                               ", $", cred.mass*100, "\\%$ HDI $[", hdi.lo, ", ", hdi.hi, "]$"))
+                               ", $", cred.mass*100, "\\%$",
+                               hdi.label, "$[", hdi.lo, ", ", hdi.hi, "]$"))
   if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
   ans
 }

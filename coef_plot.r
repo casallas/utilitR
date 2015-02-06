@@ -108,13 +108,18 @@ coef_plot_mcmc <- function(mcmc, innerCredMass = innerCM(), outerCredMass = oute
 #' @param order order coefficients per estimate value.
 #'   When set to TRUE, beware of coefficient scales to avoid misleading results and
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
-.coef_plot <- function(fit.coef, coef.names=NULL, parse.coef=F, digits=1, order.coef=F){
+#' @param math.mu When set to TRUE estimates (fit.coef) are enclosed within $..$
+#' @param math.mu_axis When set to TRUE the labels in the mu (x) axis are enclosed within $.$
+.coef_plot <- function(fit.coef, coef.names=NULL, parse.coef=F, digits=1, order.coef=F,
+                       math.mu = F, math.mu_axis = math.mu){
   # Replace coefficient names
   .coef.names(fit.coef) <- coef.names
   # Reorder coefficients
   .coef.order(fit.coef) <- order.coef
   # This allows to round mu within geom_text
   fit.coef$digits <- digits
+  # mu enclosing character
+  fit.coef$mu.enc <- ifelse(math.mu, "$", "")
 
   p <- ggplot(fit.coef, aes(x=coefficient, y=mu, ymin = outerCI.0, ymax = outerCI.1)) +
     geom_hline(yintercept=0, linetype="dashed") +
@@ -123,10 +128,10 @@ coef_plot_mcmc <- function(mcmc, innerCredMass = innerCM(), outerCredMass = oute
     geom_point(colour=coef_color(), size=mu_size()) # point estimate
   if(!is.na(digits)){
     p <- p + # CI
-      geom_text(aes(label=paste0(round(mu, digits),"\n")))
+      geom_text(aes(label=paste0(mu.enc, round(mu, digits), mu.enc, "\n")))
   }
   if(!require(magrittr)) stop("magrittr library not installed")
-  p %>% .coef_plot_deco(fit.coef, parse.coef=parse.coef)
+  p %>% .coef_plot_deco(fit.coef, parse.coef=parse.coef, math.mu_axis = math.mu_axis)
 }
 
 #' Plots the coefficients of the posterior draws of a fit using Cat's eye plots (via ggplot2 violins)
@@ -272,7 +277,8 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
 #' @param p plot to modify
 #' @param fit.coef a data frame containing a "coefficient" columns, which may be parsed
 #' @param parse.coef should scale labels be the parsed values of fit.coef$coefficient? See \code{\link{plotmath}} for the syntax.
-.coef_plot_deco <- function(p, fit.coef, parse.coef){
+#' @param math.mu_axis When set to TRUE the labels in the mu (y) axis are enclosed within $.$
+.coef_plot_deco <- function(p, fit.coef, parse.coef, math.mu_axis = F){
   # Parse the text of the factors to make them expressions
   labs <- sapply(levels(fit.coef$coefficient),
                  function(x){
@@ -280,8 +286,12 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
                  })
   names(labs) <- levels(fit.coef$coefficient)
 
-  p + scale_x_discrete("Coefficient", labels = labs)+
-    scale_y_continuous("Estimate") +
+  p <- p + scale_x_discrete("Coefficient", labels = labs)
+  if(math.mu_axis)
+    p <- p + scale_y_continuous("Estimate", labels = function(x) paste0("$", x, "$"))
+  else
+    p <- p + scale_y_continuous("Estimate")
+  p +
     coord_flip() +
     theme_bw()
 }

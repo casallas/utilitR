@@ -145,3 +145,9 @@ predict_oprobit_mcmc <- function(X, cuts, coefs, ranints, subj){
   }
   y_hat
 }
+
+#' probit approximation based on logit estimates
+#' @see page 17 of the clm.intro vignette
+#' @param logit.coefs coefficients in the probit scale
+#' @return logit.coefs/(pi/sqrt(3))
+logit2probit <- function(logit.coefs) logit.coefs/ (pi / sqrt(3))

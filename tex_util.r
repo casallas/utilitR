@@ -21,8 +21,8 @@ tex_mean <- function(vec, prefix = "M=", ...){
 }
 
 #' Wrapper for tex_num that generates the median of a vector
-#' By default the median is preceded by "Mdn=", which is the default APA style for means
-tex_median <- function(vec, prefix = "Mdn=", ...){
+#' By default the median is preceded by "\\mathit{Mdn}=", which is the default APA style for medians
+tex_median <- function(vec, prefix = "\\mathit{Mdn}=", ...){
   tex_num(median(vec), prefix, ...)
 }
 
@@ -76,12 +76,12 @@ tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names =
 #' @examples
 #' tex_summary_mcmc(rnorm(1000))
 #' # [1] "$0.09$, $95\\%$ HDI $[-1.83, 2.09]$"
-#' # Prepend "Mdn=" to estimate
-#' tex_summary_mcmc(rnorm(1000), est.str="Mdn=", digits=3)
-#' # [1] "$Mdn=-0.033$, $95\\%$ HDI $[-1.961, 1.8]$"
+#' # Prepend "Mdn" to estimate
+#' tex_summary_mcmc(rnorm(1000), est.str="\\mathit{Mdn}=", digits=3)
+#' # [1] "$\\mathit{Mdn}=-0.033$, $95\\%$ HDI $[-1.961, 1.8]$"
 #' # The same without math mode
-#' tex_summary_mcmc(rnorm(1000), est.str="Mdn=", digits=3, math.mode = F)
-#' # [1] "Mdn=0.03, 95\\% HDI [-1.869, 1.983]"
+#' tex_summary_mcmc(rnorm(1000), est.str="\\mathit{Mdn}=", digits=3, math.mode = F)
+#' # [1] "\\mathit{Mdn}=0.03, 95\\% HDI [-1.869, 1.983]"
 tex_summary_mcmc <- function(mcmc, cred.mass=0.95, est.str = "", units = "", math.mode = T, digits=texu_digits()){
   mcmc.sum <- lapply(summary_mcmc(mcmc), round, digits)
   ans <- with(mcmc.sum, paste0("$", est.str, mu, "$", units,

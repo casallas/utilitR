@@ -60,6 +60,87 @@ tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names =
         tbl.ftr, sep="\n")
 }
 
+#' Returns a latex table with one row per parameter in mcmcs and two columns
+#' The first column contains the median of each parameter.
+#' The second colum contains the .95 HDI
+#' @see summary_mcmcs
+tex_summary_mcmcs <- function(mcmcs, cred.mass=0.95, source.hdr = "Source", source.names = NULL,
+                              estimate.hdr = "$\\mathit{Mdn}$", math.mode = T, digits=texu_digits()){
+  mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% round(digits)
+  mcmc.names <- rownames(mcmc.sum)
+  if(!is.null(source.names)) mcmc.names <- source.names
+  mcmc.est <- sapply(mcmc.sum[, 1], function(num) paste0("$", num, "$"))
+  mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>% apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
+  mcmc.df <- cbind.data.frame(mcmc.names, mcmc.est, mcmc.hdi)
+  colnames(mcmc.df) <- c(source.hdr, estimate.hdr, paste0(cred.mass*100, "\\% HDI"))
+  ans <- tex_df(mcmc.df)
+  if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
+  ans
+}
+
+#' Specific method for hierarchical mcmc fits
+#' Has three columns, the first one contains the specification of each model
+#' @param ... additional parameters for tex_df
+tex_mcmc_hfit <- function(mcmcs, cred.mass=0.95, source.hdr = "Estimand", source.names = NULL,
+                              estimate.hdr = "$\\mathit{Mdn}$", math.mode = T, digits=texu_digits(),
+                              mod.names = NULL, mod.hdr = "Model", ...){
+  mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% round(digits)
+  mcmc.names <- rownames(mcmc.sum)
+  if(!is.null(source.names)) mcmc.names <- source.names
+  mcmc.est <- sapply(mcmc.sum[, 1], function(num) paste0("$", num, "$"))
+  mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>% apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
+  mcmc.df <- cbind.data.frame(mcmc.names, mcmc.est, mcmc.hdi)
+  colnames(mcmc.df) <- c(source.hdr, estimate.hdr, paste0(cred.mass*100, "\\% HDI"))
+  if(!is.null(mod.names) & (nrow(mcmc.df) == length(mod.names))){
+    mcmc.df <- cbind(mod.names, mcmc.df)
+    colnames(mcmc.df)[1] <- mod.hdr
+  }
+  ans <- tex_df(mcmc.df, ...)
+  if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
+  ans
+}
+
+#' Returns a latex table with one column per parameter in mcmcs and two rows
+#' The first row contains the median of each parameter.
+#' The second row contains the .95 HDI
+#' @see summary_mcmcs
+tex_wsummary_mcmcs <- function(mcmcs, cred.mass=0.95, source.hdr = "Source", source.names = NULL,
+                              estimate.hdr = "\\mathit{Mdn}", math.mode = T, digits=texu_digits()){
+  mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% round(digits)
+  mcmc.names <- rownames(mcmc.sum)
+  if(!is.null(source.names)) mcmc.names <- source.names
+  mcmc.est <- sapply(mcmc.sum[, 1], function(num) paste0("$", num, "$"))
+  mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>% apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
+  mcmc.df <- rbind.data.frame(mcmc.est, mcmc.hdi)
+  colnames(mcmc.df) <- mcmc.names
+  ans <- tex_df(mcmc.df)
+  if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
+  ans
+}
+
+#' Wrapper for tex_wsummary_mcmcs and tex_summary_mcmcs
+#' By default returns a wide table (tex_wsummary_mcms)
+tex_mcmc_fit <- function(mcmc_fit, coef.names = NULL, wide = T, ...){
+  if(wide) tex_wsummary_mcmcs(mcmc_fit, source.hdr = "Estimand", source.names = coef.names, ...)
+  else tex_summary_mcmcs(mcmc_fit, source.hdr = "Estimand", source.names = coef.names, ...)
+}
+
+#' Same as tex_w_summary_mcmcs, but with estimates specified directly rather than being calculated from distribution medians
+tex_est_mcmc_fit <- function(ests, mcmcs, cred.mass=0.95, source.hdr = "Source", coef.names = NULL,
+                              estimate.hdr = "\\mathit{Mdn}", math.mode = T, digits=texu_digits()){
+  source.names = coef.names
+  mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% mutate(mu = ests) %>% round(digits)
+  mcmc.names <- rownames(mcmc.sum)
+  if(!is.null(source.names)) mcmc.names <- source.names
+  mcmc.est <- sapply(mcmc.sum[, 1], function(num) paste0("$", num, "$"))
+  mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>% apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
+  mcmc.df <- rbind.data.frame(mcmc.est, mcmc.hdi)
+  colnames(mcmc.df) <- mcmc.names
+  ans <- tex_df(mcmc.df)
+  if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
+  ans
+}
+
 #' Returns a vector with the estimates of the parameters (including sigma), and adj.R2 from an lm
 extract_lm_ests <- function(fit) c(coef(fit), summary(fit)$sigma, summary(fit)$adj.r.squared)
 

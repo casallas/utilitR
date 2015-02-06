@@ -60,6 +60,23 @@ tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names =
         tbl.ftr, sep="\n")
 }
 
+#' Returns a vector with the estimates of the parameters (including sigma), and adj.R2 from an lm
+extract_lm_ests <- function(fit) c(coef(fit), summary(fit)$sigma, summary(fit)$adj.r.squared)
+
+#' A latex table for multiple slr fit with lm
+#' @param source.names column names for the estimates of the models
+#' @param mod.names model names column to be prepended to the table. If NULL, no column is added
+#' @param ... additional parameters for tex_df
+tex_slm_fits <- function(mod.list, source.names = c("$\\mathit{Intercept}$", "$\\mathit{Slope}$", "$\\hat{\\sigma}$", "$\\hat{R}^2$"),
+                         mod.names = NULL, ...){
+  ans <- do.call(rbind.data.frame, lapply(mod.list, extract_lm_ests))
+  if(!is.null(mod.names)){
+    ans <- cbind(mod.names, ans)
+    source.names <- c("Model", source.names)
+  }
+  tex_df(ans, col.names=source.names, ...)
+}
+
 #' Returns the summary of an mcmc in tex format
 #'
 #' The summary is printed in the following way "mu units, cred.mass*100\% HDI[hdi.lo, hdi.hi]"

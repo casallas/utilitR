@@ -27,14 +27,15 @@ tex_median <- function(vec, prefix = "Mdn=", ...){
 }
 
 #' Returns a dataframe in tex format
-#' @param df data frame or matrix to convert to a tex table
+#' @param df data frame or matrix to convert to a tex table. Note that colnames need to be set
 #' @param digits number of decimal places to print. Defaults to \link{\code{texu_digits}}
 #' @param drops columns from df to exclude in the output. Defaults to none
 #' @param hline vector of rows which will have a horizontal line on top. The default "1" places a line after the header.
 #' @param col.names an optional vector containing the desired column names in the output.
-tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names = NULL){
+#' @param math.cols which cols should be treated as math (i.e. enclosed in $.$)?
+tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names = NULL, math.cols = c()){
   stopifnot(require(magrittr))
-  df <- df[, !names(df) %in% drops]
+  df <- df[, !colnames(df) %in% drops]
   for(cur.col in 1:ncol(df)){
     if(df[, cur.col] %>% is.numeric){
       df[, cur.col] <- df[, cur.col] %>% round(digits)
@@ -42,12 +43,15 @@ tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names =
       df[, cur.col] <- df[, cur.col] %>% as.character # To ensure we don't have any factors remaining
     }
   }
+  for(mcol in math.cols){
+    df[, mcol] <- paste0("$", df[, mcol], "$")
+  }
   tbl.hdr <- df %>% ncol %>% rep("c", .) %>% paste0(collapse = "") %>%  # Generate ncol "c"
              paste0("\\begin{tabular}{", ., "}\n") # insert them within begin{tabular}{________}
   if(is.null(col.names)) col.names <- colnames(df)
   df <- rbind(col.names, df)
-  df.str <- df %>% apply(1, paste, collapse = " & ") %>% drop %>% # A vector of strings with the elements of each row separated by &
-              paste("\\\\") # Append "\\" to each line
+  df.str <- df %>% apply(1, paste, collapse = " & ") %>% drop # A vector of strings with the elements of each row separated by &
+  df.str[1:(length(df.str)-1)] <- df.str[1:(length(df.str)-1)] %>% paste0("\\\\") # Append "\\" to each line except the last one
   for(i in 0:(length(hline)-1)) # Insert additional "\hline" lines
     df.str <- df.str %>% append("\\hline", after=(hline[i+1]+i))
   tbl.ftr <- "\\end{tabular}\n"

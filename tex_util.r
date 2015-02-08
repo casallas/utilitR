@@ -73,7 +73,7 @@ tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names =
 #' The second colum contains the .95 HDI
 #' @see summary_mcmcs
 tex_summary_mcmcs <- function(mcmcs, cred.mass=0.95, source.hdr = "Source", source.names = NULL,
-                              estimate.hdr = "$\\mathit{Mdn}$", math.mode = T, digits=texu_digits()){
+                              estimate.hdr = "$\\mathit{Mdn}$", math.mode = T, digits=texu_digits(), hdi.hdr = "\\,\\mathrm{HDI}", ...){
   mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% round(digits)
   mcmc.names <- rownames(mcmc.sum)
   if(!is.null(source.names)) mcmc.names <- source.names
@@ -81,8 +81,9 @@ tex_summary_mcmcs <- function(mcmcs, cred.mass=0.95, source.hdr = "Source", sour
   mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>%
     apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
   mcmc.df <- cbind.data.frame(mcmc.names, mcmc.est, mcmc.hdi)
-  colnames(mcmc.df) <- c(source.hdr, estimate.hdr, paste0(cred.mass*100, "\\% HDI"))
-  ans <- tex_df(mcmc.df)
+  colnames(mcmc.df) <- c(source.hdr, estimate.hdr,
+    paste0("$", cred.mass*100, "\\%", hdi.hdr, "$"))
+  ans <- tex_df(mcmc.df, ...)
   if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
   ans
 }
@@ -92,7 +93,7 @@ tex_summary_mcmcs <- function(mcmcs, cred.mass=0.95, source.hdr = "Source", sour
 #' @param ... additional parameters for tex_df
 tex_mcmc_hfit <- function(mcmcs, cred.mass=0.95, source.hdr = "Estimand", source.names = NULL,
                               estimate.hdr = "$\\mathit{Mdn}$", math.mode = T, digits=texu_digits(),
-                              mod.names = NULL, mod.hdr = "Model", ...){
+                              mod.names = NULL, mod.hdr = "Model", hdi.hdr = "\\,\\mathrm{HDI}", ...){
   mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% round(digits)
   mcmc.names <- rownames(mcmc.sum)
   if(!is.null(source.names)) mcmc.names <- source.names
@@ -100,7 +101,8 @@ tex_mcmc_hfit <- function(mcmcs, cred.mass=0.95, source.hdr = "Estimand", source
   mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>%
     apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
   mcmc.df <- cbind.data.frame(mcmc.names, mcmc.est, mcmc.hdi)
-  colnames(mcmc.df) <- c(source.hdr, estimate.hdr, paste0(cred.mass*100, "\\% HDI"))
+  colnames(mcmc.df) <- c(source.hdr, estimate.hdr,
+    paste0("$", cred.mass*100, "\\%", hdi.hdr, "$"))
   if(!is.null(mod.names) & (nrow(mcmc.df) == length(mod.names))){
     mcmc.df <- cbind(mod.names, mcmc.df)
     colnames(mcmc.df)[1] <- mod.hdr
@@ -115,7 +117,7 @@ tex_mcmc_hfit <- function(mcmcs, cred.mass=0.95, source.hdr = "Estimand", source
 #' The second row contains the .95 HDI
 #' @see summary_mcmcs
 tex_wsummary_mcmcs <- function(mcmcs, cred.mass=0.95, source.hdr = "Source", source.names = NULL,
-                              estimate.hdr = "\\mathit{Mdn}", math.mode = T, digits=texu_digits()){
+                              math.mode = T, digits=texu_digits(), ...){
   mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% round(digits)
   mcmc.names <- rownames(mcmc.sum)
   if(!is.null(source.names)) mcmc.names <- source.names
@@ -123,7 +125,7 @@ tex_wsummary_mcmcs <- function(mcmcs, cred.mass=0.95, source.hdr = "Source", sou
   mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>% apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
   mcmc.df <- rbind.data.frame(mcmc.est, mcmc.hdi)
   colnames(mcmc.df) <- mcmc.names
-  ans <- tex_df(mcmc.df)
+  ans <- tex_df(mcmc.df, ...)
   if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
   ans
 }
@@ -137,7 +139,7 @@ tex_mcmc_fit <- function(mcmc_fit, coef.names = NULL, wide = T, ...){
 
 #' Same as tex_w_summary_mcmcs, but with estimates specified directly rather than being calculated from distribution medians
 tex_est_mcmc_fit <- function(ests, mcmcs, cred.mass=0.95, source.hdr = "Source", coef.names = NULL,
-                              estimate.hdr = "\\mathit{Mdn}", math.mode = T, digits=texu_digits()){
+                              math.mode = T, digits=texu_digits(), ...){
   source.names = coef.names
   mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% mutate(mu = ests) %>% round(digits)
   mcmc.names <- rownames(mcmc.sum)
@@ -146,7 +148,7 @@ tex_est_mcmc_fit <- function(ests, mcmcs, cred.mass=0.95, source.hdr = "Source",
   mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>% apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
   mcmc.df <- rbind.data.frame(mcmc.est, mcmc.hdi)
   colnames(mcmc.df) <- mcmc.names
-  ans <- tex_df(mcmc.df)
+  ans <- tex_df(mcmc.df, ...)
   if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
   ans
 }
@@ -171,7 +173,7 @@ tex_slm_fits <- function(mod.list, source.names = c("$\\mathit{Intercept}$", "$\
 #' Returns the summary of an mcmc in tex format
 #'
 #' The summary is printed in the following way "mu units, cred.mass*100\% HDI[hdi.lo, hdi.hi]"
-#' optionally encloses the numeric output within "$",e.g. "$mu$ units, $cred.mass*100\%$~HDI $[hdi.lo, hdi.hi]$", if math.mode == T
+#' optionally encloses the numeric output within "$",e.g. "$mu$ units, $cred.mass*100\%\,\mathrm{HDI}~[hdi.lo, hdi.hi]$", if math.mode == T
 #' The summary is calculated using \link\code{summary_mcmc}
 #'
 #' @param mcmc a numeric vector containing the mcmc draws
@@ -180,9 +182,9 @@ tex_slm_fits <- function(mod.list, source.names = c("$\\mathit{Intercept}$", "$\
 #' @param units Character string to append to the point estimate. For example "cm". By default it's ""
 #' @param math.mode if T, enclose output within "$"
 #' @digits digits number of decimal places to print
-#' @hdi.label text between cred.mass and the HDI range. By default it's "~HDI"
-#'  It might be useful to change this, e.g., to "\\text{~HDI }" for outline
-#'  equations, with math.mode = F. In this case it is also recommended to
+#' @hdi.label text between cred.mass and the HDI range. By default it's "\\,\\mathrm{HDI}~"
+#'  It might be useful to change this, e.g., to "~HDI~" with math.mode = F
+#'  For outline equations it is also recommended to
 #'  replace ", 95\\%" by "\\text{, }95\\%, for example using gsub
 #'
 #' @examples
@@ -195,11 +197,11 @@ tex_slm_fits <- function(mod.list, source.names = c("$\\mathit{Intercept}$", "$\
 #' tex_summary_mcmc(rnorm(1000), est.str="\\mathit{Mdn}=", digits=3, math.mode = F)
 #' # [1] "\\mathit{Mdn}=0.03, 95\\% HDI [-1.869, 1.983]"
 tex_summary_mcmc <- function(mcmc, cred.mass=0.95, est.str = "", units = "", math.mode = T, digits=texu_digits(),
-                             hdi.label = "~HDI "){
+                             hdi.label = "\\,\\mathrm{HDI}~"){
   mcmc.sum <- lapply(summary_mcmc(mcmc), round, digits)
   ans <- with(mcmc.sum, paste0("$", est.str, mu, "$", units,
-                               ", $", cred.mass*100, "\\%$",
-                               hdi.label, "$[", hdi.lo, ", ", hdi.hi, "]$"))
+                               ", $", cred.mass*100, "\\%",
+                               hdi.label, "[", hdi.lo, ", ", hdi.hi, "]$"))
   if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
   ans
 }

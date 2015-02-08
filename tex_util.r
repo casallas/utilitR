@@ -1,3 +1,11 @@
+#' Returns the argument in math mode
+#'
+#' @param arg any object that can be converted to character
+#' @return "$arg$"
+tex_math <- function(arg){
+  paste0("$", arg, "$")
+}
+
 #' Returns a number in tex format
 #'
 #' The number is rounded and optionally enclosed within "$"
@@ -44,7 +52,7 @@ tex_df <- function(df, digits = texu_digits(), drops = c(), hline=1, col.names =
     }
   }
   for(mcol in math.cols){
-    df[, mcol] <- paste0("$", df[, mcol], "$")
+    df[, mcol] <- tex_math(df[, mcol])
   }
   tbl.hdr <- df %>% ncol %>% rep("c", .) %>% paste0(collapse = "") %>%  # Generate ncol "c"
              paste0("\\begin{tabular}{", ., "}\n") # insert them within begin{tabular}{________}
@@ -69,8 +77,9 @@ tex_summary_mcmcs <- function(mcmcs, cred.mass=0.95, source.hdr = "Source", sour
   mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% round(digits)
   mcmc.names <- rownames(mcmc.sum)
   if(!is.null(source.names)) mcmc.names <- source.names
-  mcmc.est <- sapply(mcmc.sum[, 1], function(num) paste0("$", num, "$"))
-  mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>% apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
+  mcmc.est <- sapply(mcmc.sum[, 1], tex_math)
+  mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>%
+    apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
   mcmc.df <- cbind.data.frame(mcmc.names, mcmc.est, mcmc.hdi)
   colnames(mcmc.df) <- c(source.hdr, estimate.hdr, paste0(cred.mass*100, "\\% HDI"))
   ans <- tex_df(mcmc.df)
@@ -87,8 +96,9 @@ tex_mcmc_hfit <- function(mcmcs, cred.mass=0.95, source.hdr = "Estimand", source
   mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% round(digits)
   mcmc.names <- rownames(mcmc.sum)
   if(!is.null(source.names)) mcmc.names <- source.names
-  mcmc.est <- sapply(mcmc.sum[, 1], function(num) paste0("$", num, "$"))
-  mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>% apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
+  mcmc.est <- sapply(mcmc.sum[, 1], tex_math)
+  mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>%
+    apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
   mcmc.df <- cbind.data.frame(mcmc.names, mcmc.est, mcmc.hdi)
   colnames(mcmc.df) <- c(source.hdr, estimate.hdr, paste0(cred.mass*100, "\\% HDI"))
   if(!is.null(mod.names) & (nrow(mcmc.df) == length(mod.names))){
@@ -109,7 +119,7 @@ tex_wsummary_mcmcs <- function(mcmcs, cred.mass=0.95, source.hdr = "Source", sou
   mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% round(digits)
   mcmc.names <- rownames(mcmc.sum)
   if(!is.null(source.names)) mcmc.names <- source.names
-  mcmc.est <- sapply(mcmc.sum[, 1], function(num) paste0("$", num, "$"))
+  mcmc.est <- sapply(mcmc.sum[, 1], tex_math)
   mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>% apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
   mcmc.df <- rbind.data.frame(mcmc.est, mcmc.hdi)
   colnames(mcmc.df) <- mcmc.names
@@ -132,7 +142,7 @@ tex_est_mcmc_fit <- function(ests, mcmcs, cred.mass=0.95, source.hdr = "Source",
   mcmc.sum <- summary_mcmcs(mcmcs, cred.mass) %>% mutate(mu = ests) %>% round(digits)
   mcmc.names <- rownames(mcmc.sum)
   if(!is.null(source.names)) mcmc.names <- source.names
-  mcmc.est <- sapply(mcmc.sum[, 1], function(num) paste0("$", num, "$"))
+  mcmc.est <- sapply(mcmc.sum[, 1], tex_math)
   mcmc.hdi <- mcmc.sum[, c("hdi.lo", "hdi.hi")] %>% apply(1, paste, collapse=", ") %>% paste0("$[", ., "]$")
   mcmc.df <- rbind.data.frame(mcmc.est, mcmc.hdi)
   colnames(mcmc.df) <- mcmc.names

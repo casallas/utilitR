@@ -288,7 +288,7 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
 
   p <- p + scale_x_discrete("Coefficient", labels = labs)
   if(math.mu_axis)
-    p <- p + scale_y_continuous("Estimate", labels = function(x) paste0("$", x, "$"))
+    p <- p + scale_y_continuous("Estimate", labels = tex_math)
   else
     p <- p + scale_y_continuous("Estimate")
   p +

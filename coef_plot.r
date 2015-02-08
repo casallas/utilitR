@@ -55,6 +55,36 @@ coef_plot.lm <- function(fit, intercept=T, ...){
   .coef_plot(fit.coef, ...)
 }
 
+#' Plots the coefficients of an lmerMod fit using ggplot2
+#' @param fit an lmerMod object
+#' @param intercept include the intercept in the plot?
+#' @param ... further parameters passed to \code{\link{.coef_plot}}
+#'
+#' @examples
+#' TODO extend documentation
+coef_plot.lmerMod <- function(fit, intercept=T, ...){
+  fit.se <- summary(fit)$coefficients[,2] # se is col 2
+  #fit.CI <- confint(fit) this takes too long, or may not converge
+  fit.coef <- data.frame(
+    mu = lme4::fixef(fit),
+    se = fit.se
+  )
+  if(!intercept){
+    fit.coef <- fit.coef[-1,]
+  }
+  fit.coef <- within(fit.coef,{
+    # Create cols for +/-1 se
+    innerCI.0 <- mu - se
+    innerCI.1 <- mu + se
+    outerCI.0 <- mu - 2*se # approximate 95% CI as 2*se
+    outerCI.1 <- mu + 2*se # approximate 95% CI as 2*se
+  })
+  # Add a column for the evaluated factor based on row names, keeping order
+  fit.coef$coefficient <- factor(rownames(fit.coef), levels = rownames(fit.coef))
+
+  .coef_plot(fit.coef, ...)
+}
+
 #' Plots the coefficients of a stan fit using ggplot2
 #' @param fit a stanfit object
 #' @param pars A vector of character strings specifying the parameters to be plotted.

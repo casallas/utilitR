@@ -153,6 +153,17 @@ tex_est_mcmc_fit <- function(ests, mcmcs, cred.mass=0.95, source.hdr = "Source",
   ans
 }
 
+#' Same as tex_w_summary_mcmcs, but without credible estimates
+tex_lm_fit <- function(fit, source.hdr = "Source", coef.names = NULL,
+                       math.mode = T, digits=texu_digits(), ...){
+  ests <- c(coef(fit), with(summary(fit), c(sigma, adj.r.squared)))
+  source.names <- coef.names
+  ests <- ests %>% as.list %>% data.frame
+  ans <- tex_df(ests, col.names = coef.names, digits = digits, ...)
+  if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
+  ans
+}
+
 #' Returns a vector with the estimates of the parameters (including sigma), and adj.R2 from an lm
 extract_lm_ests <- function(fit) c(coef(fit), summary(fit)$sigma, summary(fit)$adj.r.squared)
 

@@ -314,7 +314,7 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
 #' @param parse.coef should scale labels be the parsed values of fit.coef$coefficient? See \code{\link{plotmath}} for the syntax.
 #' @param math.mu_axis When set to TRUE the labels in the mu (y) axis are enclosed within $.$
 .coef_plot_deco <- function(p, fit.coef, parse.coef, math.mu_axis = F,
-                            expand.lo = 0.75, expand.hi = expand.lo){
+                            expand.lo = 0.25, expand.hi = 0.75){
   # Parse the text of the factors to make them expressions
   labs <- sapply(levels(fit.coef$coefficient),
                  function(x){
@@ -323,7 +323,7 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
   names(labs) <- levels(fit.coef$coefficient)
 
   p <- p + scale_x_discrete("Coefficient", labels = labs, expand = c(0, 0)) +
-    expand_limits(x = c(expand.lo, length(labs) + expand.hi))
+    expand_limits(x = c(1 - expand.lo, length(labs) + expand.hi))
   if(math.mu_axis)
     p <- p + scale_y_continuous("Estimate", labels = tex_math)
   else

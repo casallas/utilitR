@@ -140,8 +140,12 @@ coef_plot_mcmc <- function(mcmc, innerCredMass = innerCM(), outerCredMass = oute
 #'   consider standardizing (e.g. using \code{\link{arm::standardize}}).
 #' @param math.mu When set to TRUE estimates (fit.coef) are enclosed within $..$
 #' @param math.mu_axis When set to TRUE the labels in the mu (x) axis are enclosed within $.$
+#' @param text.size size argument for geom_text
+#' @param text.lheight lineheight argument for geom_text
+#' @param ... further arguments passed to .coef_plot_deco
 .coef_plot <- function(fit.coef, coef.names=NULL, parse.coef=F, digits=1, order.coef=F,
-                       math.mu = F, math.mu_axis = math.mu){
+                       math.mu = F, math.mu_axis = math.mu,
+                       text.size = 4.5, text.lheight = 1.5, ...){
   # Replace coefficient names
   .coef.names(fit.coef) <- coef.names
   # Reorder coefficients
@@ -152,16 +156,17 @@ coef_plot_mcmc <- function(mcmc, innerCredMass = innerCM(), outerCredMass = oute
   fit.coef$mu.enc <- ifelse(math.mu, "$", "")
 
   p <- ggplot(fit.coef, aes(x=coefficient, y=mu, ymin = outerCI.0, ymax = outerCI.1)) +
-    geom_hline(yintercept=0, linetype="dashed") +
+    geom_hline(yintercept=0, linetype="dashed", colour = "grey50") + # grey50 is the color of the panel.border in theme_bw
     geom_linerange(colour=coef_color()) + # outer interval
     geom_linerange(aes(ymin = innerCI.0, ymax = innerCI.1), size = innerCI_size(), colour=coef_color()) + # inner interval
     geom_point(colour=coef_color(), size=mu_size()) # point estimate
   if(!is.na(digits)){
     p <- p + # CI
-      geom_text(aes(label=paste0(mu.enc, round(mu, digits), mu.enc, "\n")))
+      geom_text(aes(label=paste0(mu.enc, round(mu, digits), mu.enc, "\n")),
+                size = text.size, lineheight = text.lheight)
   }
   if(!require(magrittr)) stop("magrittr library not installed")
-  p %>% .coef_plot_deco(fit.coef, parse.coef=parse.coef, math.mu_axis = math.mu_axis)
+  p %>% .coef_plot_deco(fit.coef, parse.coef=parse.coef, math.mu_axis = math.mu_axis, ...)
 }
 
 #' Plots the coefficients of the posterior draws of a fit using Cat's eye plots (via ggplot2 violins)
@@ -305,10 +310,11 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
 
 #' Flips coordinates, adds scale (parsed) labels, names and \code{\link{theme_bw}} to the plot
 #' @param p plot to modify
-#' @param fit.coef a data frame containing a "coefficient" columns, which may be parsed
+#' @param fit.coef a data frame containing a "coefficient" column, which may be parsed
 #' @param parse.coef should scale labels be the parsed values of fit.coef$coefficient? See \code{\link{plotmath}} for the syntax.
 #' @param math.mu_axis When set to TRUE the labels in the mu (y) axis are enclosed within $.$
-.coef_plot_deco <- function(p, fit.coef, parse.coef, math.mu_axis = F){
+.coef_plot_deco <- function(p, fit.coef, parse.coef, math.mu_axis = F,
+                            expand.lo = 0.75, expand.hi = expand.lo){
   # Parse the text of the factors to make them expressions
   labs <- sapply(levels(fit.coef$coefficient),
                  function(x){
@@ -316,7 +322,8 @@ coef_catseye_mcmc <- function(mcmc, coef.names=NULL, parse.coef=F, digits=NA, or
                  })
   names(labs) <- levels(fit.coef$coefficient)
 
-  p <- p + scale_x_discrete("Coefficient", labels = labs)
+  p <- p + scale_x_discrete("Coefficient", labels = labs, expand = c(0, 0)) +
+    expand_limits(x = c(expand.lo, length(labs) + expand.hi))
   if(math.mu_axis)
     p <- p + scale_y_continuous("Estimate", labels = tex_math)
   else

@@ -14,3 +14,24 @@ row_dot_prods <- function(v1_cols, v2_cols){
   rowSums(v1_cols * v2_cols)
   # Alternative implementation: diag(as.matrix(v1_cols) %*% t(v2_cols))
 }
+
+#' Distance between a point "p", and a line (l.n, l.p)
+#' @see https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Vector_formulation
+#' @param p_cols a matrix or data.frame containing a point in each row
+#' @param l.p_cols a matrix or data.frame containing a point along the line in each row
+#' @param l.n_cols a matrix or data.frame containing the line's unit vector in each row
+row_pt_line_distances <- function(p_cols, l.p_cols, l.n_cols){
+  row_norms(
+    (p_cols - l.p_cols) -
+    (row_dot_prods(p_cols - l.p_cols, l.n_cols)*l.n_cols)
+  ) # /row_norms
+}
+
+#' Distance between the projection of point "p" on line (l.n, l.p), and point "l.p"
+#' @see https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Vector_formulation
+#' @param p_cols a matrix or data.frame containing a point in each row
+#' @param l.p_cols a matrix or data.frame containing a point along the line in each row
+#' @param l.n_cols a matrix or data.frame containing the line's unit vector in each row
+row_pt_line_proj_distances <- function(p_cols, l.p_cols, l.n_cols){
+  abs(row_dot_prods(p_cols - l.p_cols, l.n_cols))
+}

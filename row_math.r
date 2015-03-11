@@ -24,6 +24,18 @@ row_dot_prods <- function(v1_cols, v2_cols){
 #' @param p_cols a matrix or data.frame containing a point in each row
 #' @param l.p_cols a matrix or data.frame containing a point along the line in each row
 #' @param l.n_cols a matrix or data.frame containing the line's unit vector in each row
+#' @examples
+#' # 2D Taken from http://www.vitutor.com/geometry/line/point_line.html
+#' p <- rbind(c(x=2, y=-1), c(x=0, y=0))
+#' l.p <- rbind(c(x=1, y=-3/4), c(x=3, y=-4))
+#' l.n <- row_uvecs(rbind(c(x=1, y=-3/4), c(x=4, y=3)))
+#' row_pt_line_distances(p, l.p, l.n) # .4, and 5
+#' # 3D Taken from http://onlinemschool.com/math/library/analytic_geometry/p_line/
+#' # and http://math.harvard.edu/~ytzeng/worksheet/distance.pdf
+#' p <- rbind(c(x=0, y=2, z=3), c(x=2, y=3, z=1))
+#' l.p <- rbind(c(x=3, y=1, z=-1), c(x=1, y=1, z=2))
+#' l.n <- row_uvecs(rbind(c(x=2, y=1, z=2), c(x=5, y=0, z=1)))
+#' row_pt_line_distances(p, l.p, l.n) # 5, and ~2.32
 row_pt_line_distances <- function(p_cols, l.p_cols, l.n_cols){
   row_norms(
     (p_cols - l.p_cols) -
@@ -36,6 +48,30 @@ row_pt_line_distances <- function(p_cols, l.p_cols, l.n_cols){
 #' @param p_cols a matrix or data.frame containing a point in each row
 #' @param l.p_cols a matrix or data.frame containing a point along the line in each row
 #' @param l.n_cols a matrix or data.frame containing the line's unit vector in each row
+#' @examples
+#' # Based on the row_pt_line_distances examples
+#' # 2D
+#' p <- rbind(c(x=2, y=-1), c(x=0, y=0))
+#' l.p <- rbind(c(x=1, y=-3/4), c(x=3, y=-4))
+#' l.n <- row_uvecs(rbind(c(x=1, y=-3/4), c(x=4, y=3)))
+#' all.equal(
+#'   sqrt(
+#'     row_pt_line_distances(p, l.p, l.n)^2 +
+#'     row_pt_line_proj_distances(p, l.p, l.n)^2
+#'   ), #/row_norms
+#'   row_distances(p, l.p)
+#' ) # /all.equal
+#' # 3D
+#' p <- rbind(c(x=0, y=2, z=3), c(x=2, y=3, z=1))
+#' l.p <- rbind(c(x=3, y=1, z=-1), c(x=1, y=1, z=2))
+#' l.n <- row_uvecs(rbind(c(x=2, y=1, z=2), c(x=5, y=0, z=1)))
+#' all.equal(
+#'   sqrt(
+#'     row_pt_line_distances(p, l.p, l.n)^2 +
+#'     row_pt_line_proj_distances(p, l.p, l.n)^2
+#'   ), #/row_norms
+#'   row_distances(p, l.p)
+#' ) # /all.equal
 row_pt_line_proj_distances <- function(p_cols, l.p_cols, l.n_cols){
   abs(row_dot_prods(p_cols - l.p_cols, l.n_cols))
 }

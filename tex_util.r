@@ -22,6 +22,76 @@ tex_num <- function(num, prefix = "", postfix = "", math.mode = T, digits=texu_d
   ans
 }
 
+#' Spells the 'num' digit in english
+#' if  num < 1 || num > 10 returns NULL
+tex_spell_digit <- function(num){
+  switch(as.character(num),
+         '1' = 'one',
+         '2' = 'two',
+         '3' = 'three',
+         '4' = 'four',
+         '5' = 'five',
+         '6' = 'six',
+         '7' = 'seven',
+         '8' = 'eight',
+         '9' = 'nine')
+}
+
+#' Spells 'num' in english.
+#' If capitalize = T the first letter of the string is capitalized.
+#' Currently works for |num| < 100 iff num is an integer.
+#' Other numbers throw an error
+tex_spell_num <- function(num, capitalize = F, zero.str = 'none', ...){
+  if(num != as.integer(num)) stop("Don't know how to spell floats")
+  ans <- ""
+  if(num < 0){
+    ans <- "minus "
+    num <- num*-1
+  }
+  if(num == 0){
+    ans <- zero.str
+  } else if(num < 10){
+    ans <- paste0(ans, tex_spell_digit(num))
+  } else if(num < 20){
+    ans <-paste0(ans,
+                switch(as.character(num),
+                       '10' = 'ten',
+                       '11' = 'eleven',
+                       '12' = 'twelve',
+                       '13' = 'thirteen',
+                       '14' = 'fourteen',
+                       '15' = 'fifteen',
+                       '16' = 'sixteen',
+                       '17' = 'seventeen',
+                       '18' = 'eighteen',
+                       '19' = 'nineteen')
+    )
+  } else if(num < 100){
+    tens <- 10*floor(num/10)
+    digits <- num - tens
+    ans <- paste0(ans,
+                 switch(as.character(tens),
+                        '20' = 'twenty',
+                        '30' = 'thirty',
+                        '40' = 'fourty',
+                        '50' = 'fifty',
+                        '60' = 'sixty',
+                        '70' = 'seventy',
+                        '80' = 'eighty',
+                        '90' = 'ninety',
+                        '100' = 'one-hundred'))
+    if(digits > 0)
+      ans <- paste0(ans, '-', tex_spell_digit(digits))
+  } else {
+    stop("Don't know how to spell ", num)
+  }
+  if(capitalize){
+    ch0 <- substr(ans, 1, 1)
+    substr(ans, 1, 1) <- toupper(ch0)
+  }
+  ans
+}
+
 #' Wrapper for tex_num that generates the mean of a vector
 #' By default the mean is preceded by "M=", which is the default APA style for means
 tex_mean <- function(vec, prefix = "M=", ...){

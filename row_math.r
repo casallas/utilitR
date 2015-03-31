@@ -2,6 +2,10 @@
 #' @param vec_cols a matrix or data.frame containing numeric vectors in each row
 row_norms <- function(vec_cols) sqrt(rowSums(vec_cols^2))
 
+#' Gets the squared norm of each of the rows of a matrix or data frame
+#' @param vec_cols a matrix or data.frame containing numeric vectors in each row
+row_norms2 <- function(vec_cols) rowSums(vec_cols^2)
+
 #' Gets the unit vector of each of the rows of a matrix or data frame
 #' @param vec_cols a matrix or data.frame containing numeric vectors in each row
 row_uvecs <- function(vec_cols) vec_cols/row_norms(vec_cols)
@@ -74,4 +78,21 @@ row_pt_line_distances <- function(p_cols, l.p_cols, l.n_cols){
 #' ) # /all.equal
 row_pt_line_proj_distances <- function(p_cols, l.p_cols, l.n_cols){
   abs(row_dot_prods(p_cols - l.p_cols, l.n_cols))
+}
+
+#' Gets the scalar projections of the rows of v_cols on the rows of k_cols
+#' row_scalar_projs(data.frame(x=1:4,-2:1), data.frame(-1:2,0:3)) # -1 -1  1.341641  3.050851
+row_scalar_projs <- function(v_cols, k_cols){
+  row_dot_prods(v_cols, row_uvecs(k_cols))
+}
+
+#' Gets the vector projections of the rows of v_cols on the rows of k_cols
+row_projs <- function(v_cols, k_cols){
+  k_cols <- row_uvecs(k_cols)
+  k_cols*row_dot_prods(v_cols, k_cols)
+}
+
+#' Gets the vector rejections of the rows of v_cols on the rows of k_cols
+row_rejs <- function(v_cols, k_cols){
+  v_cols - row_projs(v_cols, k_cols)
 }

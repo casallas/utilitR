@@ -37,6 +37,13 @@ vec_rotate <- function(v, k, theta){
     k*vec_dot_prod(k,v)*(1-cos(theta))
 }
 
+#' Converts v to string
+#' parens can be length 2, or length 1, in which case the same char is used twice
+vec_tostr <- function(v, sep = ", ", parens = c("(", ")")){
+  if(length(parens == 1)) parens = rep(parens, 2)
+  paste0(parens[1], paste0(v, collapse = sep), parens[2])
+}
+
 #' Gets the scalar projection of vector v on vector k
 #' http://www.math.ucla.edu/~ronmiech/Calculus_Problems/32A/chap11/section3/701d37/701_37.html
 #' vec_scalar_proj(c(4,1), c(2,3)) # 3.05 # 11/sqrt(13)

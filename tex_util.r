@@ -176,6 +176,10 @@ tex_mcmc_hfit <- function(mcmcs, cred.mass=0.95, source.hdr = "Estimand", source
   if(!is.null(mod.names) & (nrow(mcmc.df) == length(mod.names))){
     mcmc.df <- cbind(mod.names, mcmc.df)
     colnames(mcmc.df)[1] <- mod.hdr
+  } else {
+    err_str <- "Model names column not added to the answer, "
+    if(is.null(mod.names)) warning(err_str, "because mod.names is null")
+    else if(nrow(mcmc.df) != length(mod.names)) warning(err_str, "because its length was ", length(mod.names), " but the output table has ", nrow(mcmc.df), " rows")
   }
   ans <- tex_df(mcmc.df, ...)
   if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")

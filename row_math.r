@@ -40,7 +40,7 @@ row_rotateq <- function(vec_cols, quat_cols){
   quat3_cols <- quat_cols[,1:3]
   uvec_cols  <- row_cross_prods(quat3_cols, vec_cols)
   uuvec_cols <- row_cross_prods(quat3_cols, uvec_cols)
-  uvec_cols  <- uvec_cols*( 2*quat_cols[,4] )
+  uvec_cols  <- uvec_cols * (2*unlist(quat_cols[, 4]))
   uuvec_cols <- uuvec_cols * 2
   vec_cols + uvec_cols + uuvec_cols
 }

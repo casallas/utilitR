@@ -23,6 +23,29 @@ row_dot_prods <- function(v1_cols, v2_cols){
   # Alternative implementation: diag(as.matrix(v1_cols) %*% t(v2_cols))
 }
 
+#' Calculates the cross product between a and b
+#' Examples
+#' row_cross_prods(rbind(c(3,-3,1), c(3, -3, 1)), rbind(c(4,9,2), c(-12, 12, -4))) # rbind(c(-15, -2, 39), c(0, 0, 0))
+row_cross_prods <- function(a, b){
+  cbind(a[,2]*b[,3] - a[,3]*b[,2],
+   -a[,1]*b[,3] + a[,3]*b[,1],
+    a[,1]*b[,2] - a[,2]*b[,1]
+  )
+}
+
+#' Rotates vector vec by quaternion quat
+#' translated to R from osg::Quat::operator*(osg::Vec3)
+row_rotateq <- function(vec_cols, quat_cols){
+  # Subset the first 3 elements of quat to calculate the cross products with vec
+  quat3_cols <- quat_cols[,1:3]
+  uvec_cols  <- row_cross_prods(quat3_cols, vec_cols)
+  uuvec_cols <- row_cross_prods(quat3_cols, uvec_cols)
+  uvec_cols  <- uvec_cols*( 2*quat_cols[,4] )
+  uuvec_cols <- uuvec_cols * 2
+  vec_cols + uvec_cols + uuvec_cols
+}
+
+
 #' Distance between a point "p", and a line (l.n, l.p)
 #' @see https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Vector_formulation
 #' @param p_cols a matrix or data.frame containing a point in each row

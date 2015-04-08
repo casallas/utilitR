@@ -37,6 +37,18 @@ vec_rotate <- function(v, k, theta){
     k*vec_dot_prod(k,v)*(1-cos(theta))
 }
 
+#' Rotates vector vec by quaternion quat
+#' translated to R from osg::Quat::operator*(osg::Vec3)
+vec_rotateq <- function(vec, quat){
+  # Subset the first 3 elements of quat to calculate the cross products with vec
+  quat3 <- quat[1:3]
+  uvec  <- vec_cross_prod(quat3, vec)
+  uuvec <- vec_cross_prod(quat3, uvec)
+  uvec <- uvec*( 2*quat[4] )
+  uuvec <- uuvec * 2
+  vec + uvec + uuvec
+}
+
 #' Converts v to string
 #' parens can be length 2, or length 1, in which case the same char is used twice
 vec_tostr <- function(v, sep = ", ", parens = c("(", ")")){

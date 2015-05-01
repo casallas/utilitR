@@ -38,13 +38,17 @@ vec_rotate <- function(v, k, theta){
 }
 
 #' Rotates vector vec by quaternion quat
-#' translated to R from osg::Quat::operator*(osg::Vec3)
+#' translated to R from osg::Quat::operator*(osg::Vec3).
+#' Notice that the results should be identical to
+#' q_prod(q_prod(quat, c(vec, 0)), q_conj(quat)) AND
+#' vec_rotate(vec, quat2angle_axis(quat)$axis, quat2angle_axis(quat)$angle)
+#' @param quat a quaternion expressed as [(i, j, k), w]
 vec_rotateq <- function(vec, quat){
   # Subset the first 3 elements of quat to calculate the cross products with vec
-  quat3 <- quat[1:3]
+  quat3 <- quat[1:3] # q_vec(quat)
   uvec  <- vec_cross_prod(quat3, vec)
   uuvec <- vec_cross_prod(quat3, uvec)
-  uvec <- uvec*( 2*quat[4] )
+  uvec <- uvec*( 2*quat[4] ) # uvec*( 2*q_w(quat) )
   uuvec <- uuvec * 2
   vec + uvec + uuvec
 }

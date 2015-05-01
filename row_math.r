@@ -35,12 +35,13 @@ row_cross_prods <- function(a, b){
 
 #' Rotates vector vec by quaternion quat
 #' translated to R from osg::Quat::operator*(osg::Vec3)
+#' @param quat_cols columns of quaternions expressed as [(i, j, k), w]
 row_rotateq <- function(vec_cols, quat_cols){
   # Subset the first 3 elements of quat to calculate the cross products with vec
-  quat3_cols <- quat_cols[,1:3]
+  quat3_cols <- quat_cols[,1:3] # apply(quat_cols, 1, q_vec)
   uvec_cols  <- row_cross_prods(quat3_cols, vec_cols)
   uuvec_cols <- row_cross_prods(quat3_cols, uvec_cols)
-  uvec_cols  <- uvec_cols * (2*unlist(quat_cols[, 4]))
+  uvec_cols  <- uvec_cols * (2*unlist(quat_cols[, 4])) # uvec_cols*( 2*apply(quat_cols, 1, q_w)
   uuvec_cols <- uuvec_cols * 2
   vec_cols + uvec_cols + uuvec_cols
 }

@@ -14,9 +14,15 @@ tex_math <- function(arg){
 #' @param prefix Character string to prepend to the number estimate. For example "Mdn=". By default it's ""
 #' @param postfix Character string to append to the point estimate. For example "cm". By default it's ""
 #' @param math.mode if T, enclose output within "$"
-#' @digits digits number of decimal places to print
-tex_num <- function(num, prefix = "", postfix = "", math.mode = T, digits=texu_digits()){
-  num <- round(num, digits)
+#' @param digits digits number of decimal places to print
+#' @param big.mark a character to use every 3 decimals before the decimal point
+#' @param force.digits should the number of digits be enforced?
+#' @param ... aditional options passed to formatC
+tex_num <- function(num, prefix = "", postfix = "", math.mode = T,
+                    digits=texu_digits(), big.mark = texu_big.mark(math.mode),
+                    force.digits = F, ...){
+  num <- formatC(num, digits = digits, format = "f", big.mark = big.mark,
+                 drop0trailing = !force.digits, ...)
   ans <- paste0("$", prefix, num, "$", postfix)
   if(!math.mode) ans <- stringr::str_replace_all(ans, stringr::fixed("$"), "")
   ans
@@ -302,9 +308,38 @@ texu_digits <- function(){
   tex_util.__digits
 }
 
-#' Gets the default digits for tex_util methods
+#' Sets the default digits for tex_util methods
 #'
 #' By default digits = 2
 set_texu_digits <- function(digits=2){
   tex_util.__digits <<- digits
+}
+
+#' Gets the default big.mark for tex_util methods
+#'
+#' By default big.mark = {,} for math.mode and , otherwise
+#' To change the default digits call \code\{link{set_texu_digits}}
+texu_big.mark <- function(math.mode = F, tex_mode = ifelse(math.mode, "math", "text")){
+  if(!exists("tex_util.__big.mark")){
+    set_texu_big.mark()
+  }
+  tex_util.__big.mark[[tex_mode]]
+}
+
+#' sets the default digits for tex_util methods
+#'
+#' By default big.mark = c(math="{,}", text=",")
+set_texu_big.mark <- function(big.mark = c(text=",", math="{,}")){
+  if(length(big.mark) == 1) big.mark <- c(math=big.mark[[1]], text=big.mark[[1]])
+  else if(length(big.mark) != 2) stop("can only specify 1 or 2 values for big.mark")
+
+  if(is.null(names(big.mark)) || !(
+       all(names(big.mark) %in% c("text", "math")) &&(
+         length(unique(names(big.mark)))==2) #/&&
+     )#/|| !
+  ){
+    names(big.mark) <- c("text", "math")
+    warning('"', big.mark[1], '" will be set to text mode, and "', big.mark[2], '" will be set to math mode')
+  }
+  tex_util.__big.mark <<- big.mark
 }
